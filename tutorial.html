@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL解説 - easyRDB</title>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQL解説</h1>
+            <p>SQLの基本的な記述方法を学びましょう</p>
+            <div class="nav-buttons">
+                <a href="index.html" class="btn btn-secondary">🏠 ホーム</a>
+            </div>
+        </div>
+
+        <div class="tutorial-layout">
+            <div class="tutorial-sidebar">
+                <h3>📚 目次</h3>
+                <ul class="tutorial-nav">
+                    <li><a href="#intro" data-section="intro">SQLとは</a></li>
+                    <li><a href="#select" data-section="select">SELECT文</a></li>
+                    <li><a href="#where" data-section="where">WHERE句</a></li>
+                    <li><a href="#join" data-section="join">JOIN</a></li>
+                    <li><a href="#aggregate" data-section="aggregate">集約関数</a></li>
+                    <li><a href="#insert" data-section="insert">INSERT文</a></li>
+                    <li><a href="#update" data-section="update">UPDATE文</a></li>
+                    <li><a href="#delete" data-section="delete">DELETE文</a></li>
+                </ul>
+            </div>
+
+            <div class="tutorial-content">
+                <!-- SQLとは -->
+                <section id="intro" class="tutorial-section active">
+                    <h2>SQLとは</h2>
+                    <p>SQL（Structured Query Language）は、リレーショナルデータベースを操作するための標準的な言語です。</p>
+                    
+                    <h3>主な機能</h3>
+                    <ul>
+                        <li><strong>データの検索</strong>: SELECT文を使ってデータを取得</li>
+                        <li><strong>データの挿入</strong>: INSERT文を使って新しいデータを追加</li>
+                        <li><strong>データの更新</strong>: UPDATE文を使って既存のデータを変更</li>
+                        <li><strong>データの削除</strong>: DELETE文を使ってデータを削除</li>
+                    </ul>
+
+                    <div class="code-example">
+                        <h4>基本的な書式</h4>
+                        <pre><code>-- これはコメントです
+SELECT column1, column2
+FROM table_name
+WHERE condition;</code></pre>
+                    </div>
+                </section>
+
+                <!-- SELECT文 -->
+                <section id="select" class="tutorial-section">
+                    <h2>SELECT文 - データの取得</h2>
+                    <p>SELECT文は、データベースからデータを取得するために使用します。</p>
+
+                    <h3>基本構文</h3>
+                    <div class="code-example">
+                        <pre><code>SELECT column1, column2, ...
+FROM table_name;</code></pre>
+                    </div>
+
+                    <h3>全列の取得</h3>
+                    <div class="code-example">
+                        <pre><code>-- 全ての列を取得
+SELECT * FROM users;</code></pre>
+                    </div>
+
+                    <h3>特定の列のみ取得</h3>
+                    <div class="code-example">
+                        <pre><code>-- 名前とメールのみ取得
+SELECT name, email FROM users;</code></pre>
+                    </div>
+
+                    <div class="practice-box">
+                        <h4>💡 練習問題</h4>
+                        <p>usersテーブルから名前と年齢を取得してください。</p>
+                        <details>
+                            <summary>答えを見る</summary>
+                            <pre><code>SELECT name, age FROM users;</code></pre>
+                        </details>
+                    </div>
+                </section>
+
+                <!-- WHERE句 -->
+                <section id="where" class="tutorial-section">
+                    <h2>WHERE句 - 条件による絞り込み</h2>
+                    <p>WHERE句を使用すると、特定の条件に合うデータのみを取得できます。</p>
+
+                    <h3>基本構文</h3>
+                    <div class="code-example">
+                        <pre><code>SELECT column1, column2
+FROM table_name
+WHERE condition;</code></pre>
+                    </div>
+
+                    <h3>比較演算子</h3>
+                    <table class="comparison-table">
+                        <tr><th>演算子</th><th>意味</th><th>例</th></tr>
+                        <tr><td>=</td><td>等しい</td><td>age = 25</td></tr>
+                        <tr><td>></td><td>より大きい</td><td>age > 25</td></tr>
+                        <tr><td>&lt;</td><td>より小さい</td><td>age < 30</td></tr>
+                        <tr><td>>=</td><td>以上</td><td>age >= 25</td></tr>
+                        <tr><td>&lt;=</td><td>以下</td><td>age <= 30</td></tr>
+                        <tr><td>!=</td><td>等しくない</td><td>age != 25</td></tr>
+                    </table>
+
+                    <h3>使用例</h3>
+                    <div class="code-example">
+                        <pre><code>-- 30歳以上のユーザー
+SELECT * FROM users WHERE age >= 30;
+
+-- 営業部のユーザー
+SELECT * FROM users WHERE department = '営業部';
+
+-- 名前が田中太郎のユーザー
+SELECT * FROM users WHERE name = '田中太郎';</code></pre>
+                    </div>
+
+                    <div class="practice-box">
+                        <h4>💡 練習問題</h4>
+                        <p>25歳より若いユーザーの名前とメールを取得してください。</p>
+                        <details>
+                            <summary>答えを見る</summary>
+                            <pre><code>SELECT name, email FROM users WHERE age < 25;</code></pre>
+                        </details>
+                    </div>
+                </section>
+
+                <!-- JOIN -->
+                <section id="join" class="tutorial-section">
+                    <h2>JOIN - テーブルの結合</h2>
+                    <p>JOINを使用すると、複数のテーブルのデータを関連付けて取得できます。</p>
+
+                    <h3>INNER JOIN</h3>
+                    <div class="code-example">
+                        <pre><code>SELECT u.name, o.product_name, o.price
+FROM users u
+INNER JOIN orders o ON u.id = o.user_id;</code></pre>
+                    </div>
+
+                    <h3>テーブルの別名</h3>
+                    <p>長いテーブル名を短縮するために別名（エイリアス）を使用できます。</p>
+                    <div class="code-example">
+                        <pre><code>-- users を u、orders を o として使用
+SELECT u.name, u.email, o.product_name
+FROM users u
+INNER JOIN orders o ON u.id = o.user_id;</code></pre>
+                    </div>
+
+                    <div class="practice-box">
+                        <h4>💡 練習問題</h4>
+                        <p>ユーザーと注文を結合して、ユーザー名と注文日を取得してください。</p>
+                        <details>
+                            <summary>答えを見る</summary>
+                            <pre><code>SELECT u.name, o.order_date
+FROM users u
+INNER JOIN orders o ON u.id = o.user_id;</code></pre>
+                        </details>
+                    </div>
+                </section>
+
+                <!-- 集約関数 -->
+                <section id="aggregate" class="tutorial-section">
+                    <h2>集約関数 - データの集計</h2>
+                    <p>集約関数を使用して、データの件数や合計、平均などを計算できます。</p>
+
+                    <h3>主な集約関数</h3>
+                    <table class="comparison-table">
+                        <tr><th>関数</th><th>説明</th><th>例</th></tr>
+                        <tr><td>COUNT()</td><td>件数を数える</td><td>COUNT(*)</td></tr>
+                        <tr><td>SUM()</td><td>合計を計算</td><td>SUM(price)</td></tr>
+                        <tr><td>AVG()</td><td>平均を計算</td><td>AVG(age)</td></tr>
+                        <tr><td>MAX()</td><td>最大値を取得</td><td>MAX(age)</td></tr>
+                        <tr><td>MIN()</td><td>最小値を取得</td><td>MIN(age)</td></tr>
+                    </table>
+
+                    <h3>GROUP BY句</h3>
+                    <div class="code-example">
+                        <pre><code>-- 部署ごとのユーザー数
+SELECT department, COUNT(*)
+FROM users
+GROUP BY department;</code></pre>
+                    </div>
+
+                    <h3>使用例</h3>
+                    <div class="code-example">
+                        <pre><code>-- 全ユーザー数
+SELECT COUNT(*) FROM users;
+
+-- 平均年齢
+SELECT AVG(age) FROM users;
+
+-- 部署ごとの平均年齢
+SELECT department, AVG(age)
+FROM users
+GROUP BY department;</code></pre>
+                    </div>
+
+                    <div class="practice-box">
+                        <h4>💡 練習問題</h4>
+                        <p>ordersテーブルから商品ごとの注文件数を取得してください。</p>
+                        <details>
+                            <summary>答えを見る</summary>
+                            <pre><code>SELECT product_name, COUNT(*)
+FROM orders
+GROUP BY product_name;</code></pre>
+                        </details>
+                    </div>
+                </section>
+
+                <!-- INSERT文 -->
+                <section id="insert" class="tutorial-section">
+                    <h2>INSERT文 - データの挿入</h2>
+                    <p>INSERT文を使用して、テーブルに新しいデータを追加します。</p>
+
+                    <h3>基本構文</h3>
+                    <div class="code-example">
+                        <pre><code>INSERT INTO table_name (column1, column2, ...)
+VALUES (value1, value2, ...);</code></pre>
+                    </div>
+
+                    <h3>使用例</h3>
+                    <div class="code-example">
+                        <pre><code>-- 新しいユーザーを追加
+INSERT INTO users (name, email, age, department)
+VALUES ('新田次郎', 'nitta@example.com', 28, 'マーケティング部');</code></pre>
+                    </div>
+
+                    <h3>注意点</h3>
+                    <ul>
+                        <li>文字列は必ずシングルクォート（'）またはダブルクォート（"）で囲む</li>
+                        <li>数値はクォートで囲まない</li>
+                        <li>列名と値の順序を一致させる</li>
+                    </ul>
+
+                    <div class="practice-box">
+                        <h4>💡 練習問題</h4>
+                        <p>あなた自身のデータをusersテーブルに追加してください。</p>
+                        <details>
+                            <summary>答えの例</summary>
+                            <pre><code>INSERT INTO users (name, email, age, department)
+VALUES ('山田花子', 'hanako@example.com', 25, 'システム部');</code></pre>
+                        </details>
+                    </div>
+                </section>
+
+                <!-- UPDATE文 -->
+                <section id="update" class="tutorial-section">
+                    <h2>UPDATE文 - データの更新</h2>
+                    <p>UPDATE文を使用して、既存のデータを変更します。</p>
+
+                    <h3>基本構文</h3>
+                    <div class="code-example">
+                        <pre><code>UPDATE table_name
+SET column1 = value1, column2 = value2, ...
+WHERE condition;</code></pre>
+                    </div>
+
+                    <h3>使用例</h3>
+                    <div class="code-example">
+                        <pre><code>-- ID=1のユーザーのメールアドレスを更新
+UPDATE users
+SET email = 'new_tanaka@example.com'
+WHERE id = 1;
+
+-- 営業部の全員の部署名を変更
+UPDATE users
+SET department = '営業企画部'
+WHERE department = '営業部';</code></pre>
+                    </div>
+
+                    <h3>⚠️ 重要な注意点</h3>
+                    <div class="warning-box">
+                        <p><strong>WHERE句を忘れないでください！</strong></p>
+                        <p>WHERE句がないと、テーブル内の全てのレコードが更新されてしまいます。</p>
+                    </div>
+
+                    <div class="practice-box">
+                        <h4>💡 練習問題</h4>
+                        <p>ID=2のユーザーの年齢を30歳に更新してください。</p>
+                        <details>
+                            <summary>答えを見る</summary>
+                            <pre><code>UPDATE users SET age = 30 WHERE id = 2;</code></pre>
+                        </details>
+                    </div>
+                </section>
+
+                <!-- DELETE文 -->
+                <section id="delete" class="tutorial-section">
+                    <h2>DELETE文 - データの削除</h2>
+                    <p>DELETE文を使用して、テーブルからデータを削除します。</p>
+
+                    <h3>基本構文</h3>
+                    <div class="code-example">
+                        <pre><code>DELETE FROM table_name
+WHERE condition;</code></pre>
+                    </div>
+
+                    <h3>使用例</h3>
+                    <div class="code-example">
+                        <pre><code>-- ID=5のユーザーを削除
+DELETE FROM users WHERE id = 5;
+
+-- 30歳未満のユーザーを全て削除
+DELETE FROM users WHERE age < 30;</code></pre>
+                    </div>
+
+                    <h3>⚠️ 重要な注意点</h3>
+                    <div class="warning-box">
+                        <p><strong>WHERE句を忘れないでください！</strong></p>
+                        <p>WHERE句がないと、テーブル内の全てのレコードが削除されてしまいます。</p>
+                    </div>
+
+                    <h3>全データ削除</h3>
+                    <div class="code-example">
+                        <pre><code>-- テーブルの全データを削除（注意！）
+DELETE FROM users;</code></pre>
+                    </div>
+
+                    <div class="practice-box">
+                        <h4>💡 練習問題</h4>
+                        <p>人事部のユーザーを全て削除してください。</p>
+                        <details>
+                            <summary>答えを見る</summary>
+                            <pre><code>DELETE FROM users WHERE department = '人事部';</code></pre>
+                        </details>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="tutorial-footer">
+            <div class="footer-buttons">
+                <a href="index.html" class="btn btn-primary">🚀 SQLエディタで実践する</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="tutorial.js"></script>
+</body>
+</html>
