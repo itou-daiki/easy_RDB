@@ -200,6 +200,7 @@
                             <p><strong>email:</strong> TEXT</p>
                             <p><strong>age:</strong> INTEGER</p>
                             <p><strong>department:</strong> TEXT</p>
+                            <p class="schema-note">20名のユーザー (年齢23-38歳)</p>
                         </div>
                         <div class="table-actions">
                             <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'select'))">📋 SELECT</button>
@@ -217,6 +218,7 @@
                             <p><strong>product_name:</strong> TEXT</p>
                             <p><strong>price:</strong> INTEGER</p>
                             <p><strong>order_date:</strong> TEXT</p>
+                            <p class="schema-note">30件の注文 (価格1,200円-120,000円)</p>
                         </div>
                         <div class="table-actions">
                             <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('orders', 'select'))">📋 SELECT</button>
@@ -232,6 +234,7 @@
                             <p><strong>id:</strong> INTEGER (PRIMARY KEY)</p>
                             <p><strong>name:</strong> TEXT</p>
                             <p><strong>manager:</strong> TEXT</p>
+                            <p class="schema-note">5部署: 営業部、開発部、人事部、マーケティング部、経理部</p>
                         </div>
                         <div class="table-actions">
                             <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('departments', 'select'))">📋 SELECT</button>
@@ -299,7 +302,21 @@
                                         <td>営業部</td>
                                     </tr>
                                     <tr>
-                                        <td colspan="5" class="more-data">... さらに2件のデータ</td>
+                                        <td>4</td>
+                                        <td>高橋美咲</td>
+                                        <td>takahashi@example.com</td>
+                                        <td>35</td>
+                                        <td>人事部</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5</td>
+                                        <td>山田健太</td>
+                                        <td>yamada@example.com</td>
+                                        <td>29</td>
+                                        <td>開発部</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5" class="more-data">... さらに15件のデータ (総計20件)</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -346,7 +363,21 @@
                                         <td>2024-02-01</td>
                                     </tr>
                                     <tr>
-                                        <td colspan="5" class="more-data">... さらに2件のデータ</td>
+                                        <td>4</td>
+                                        <td>3</td>
+                                        <td>モニター</td>
+                                        <td>25000</td>
+                                        <td>2024-02-10</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5</td>
+                                        <td>4</td>
+                                        <td>プリンター</td>
+                                        <td>15000</td>
+                                        <td>2024-02-15</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5" class="more-data">... さらに25件のデータ (総計30件)</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -383,6 +414,16 @@
                                         <td>3</td>
                                         <td>人事部</td>
                                         <td>人事部長</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4</td>
+                                        <td>マーケティング部</td>
+                                        <td>マーケティング部長</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5</td>
+                                        <td>経理部</td>
+                                        <td>経理部長</td>
                                     </tr>
                                 </tbody>
                             </table>
