@@ -1067,9 +1067,9 @@ tr:hover {
 }
 
 .helper-buttons {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    flex-wrap: wrap;
 }
 
 .btn-helper {
@@ -1215,6 +1215,7 @@ tr:hover {
     }
 
     .helper-buttons {
+        grid-template-columns: repeat(2, 1fr);
         gap: 6px;
     }
 
@@ -1288,5 +1289,17 @@ tr:hover {
     .relation-desc {
         font-size: 11px;
         padding: 1px 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .helper-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .btn-helper {
+        justify-content: flex-start;
+        min-width: auto;
     }
 }
