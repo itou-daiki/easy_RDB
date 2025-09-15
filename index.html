@@ -104,6 +104,84 @@
                             <div id="queryResult"></div>
                         </div>
                     </div>
+
+                    <div class="er-diagram-section">
+                        <div class="result-header">
+                            <span>🔗</span>
+                            ER図 (Entity Relationship Diagram)
+                            <button class="btn btn-mini" id="toggleERDiagram" onclick="toggleERDiagram()">
+                                <span>👁️</span>
+                                表示/非表示
+                            </button>
+                        </div>
+                        <div class="er-diagram-container" id="erDiagramContainer">
+                            <svg id="erDiagram" width="100%" height="400" viewBox="0 0 800 400">
+                                <!-- Users テーブル -->
+                                <g class="table-entity" data-table="users">
+                                    <rect x="50" y="50" width="180" height="160" class="entity-rect"/>
+                                    <text x="140" y="75" class="entity-title">users</text>
+                                    <line x1="50" y1="85" x2="230" y2="85" class="entity-line"/>
+                                    <text x="60" y="105" class="field-text pk">🔑 id: INTEGER</text>
+                                    <text x="60" y="125" class="field-text">name: TEXT</text>
+                                    <text x="60" y="145" class="field-text">email: TEXT</text>
+                                    <text x="60" y="165" class="field-text">age: INTEGER</text>
+                                    <text x="60" y="185" class="field-text">department: TEXT</text>
+                                </g>
+
+                                <!-- Orders テーブル -->
+                                <g class="table-entity" data-table="orders">
+                                    <rect x="320" y="50" width="200" height="160" class="entity-rect"/>
+                                    <text x="420" y="75" class="entity-title">orders</text>
+                                    <line x1="320" y1="85" x2="520" y2="85" class="entity-line"/>
+                                    <text x="330" y="105" class="field-text pk">🔑 id: INTEGER</text>
+                                    <text x="330" y="125" class="field-text fk">🔗 user_id: INTEGER</text>
+                                    <text x="330" y="145" class="field-text">product_name: TEXT</text>
+                                    <text x="330" y="165" class="field-text">price: INTEGER</text>
+                                    <text x="330" y="185" class="field-text">order_date: TEXT</text>
+                                </g>
+
+                                <!-- Departments テーブル -->
+                                <g class="table-entity" data-table="departments">
+                                    <rect x="50" y="280" width="180" height="100" class="entity-rect"/>
+                                    <text x="140" y="305" class="entity-title">departments</text>
+                                    <line x1="50" y1="315" x2="230" y2="315" class="entity-line"/>
+                                    <text x="60" y="335" class="field-text pk">🔑 id: INTEGER</text>
+                                    <text x="60" y="355" class="field-text">name: TEXT</text>
+                                    <text x="60" y="375" class="field-text">manager: TEXT</text>
+                                </g>
+
+                                <!-- リレーションシップ線 -->
+                                <!-- users -> orders -->
+                                <g class="relationship" data-from="users" data-to="orders">
+                                    <line x1="230" y1="130" x2="320" y2="125" class="relation-line"/>
+                                    <circle cx="230" cy="130" r="3" class="relation-endpoint"/>
+                                    <circle cx="320" cy="125" r="3" class="relation-endpoint"/>
+                                    <text x="275" y="120" class="relation-text">1:N</text>
+                                </g>
+
+                                <!-- users -> departments (conceptual) -->
+                                <g class="relationship" data-from="users" data-to="departments">
+                                    <line x1="140" y1="210" x2="140" y2="280" class="relation-line relation-dotted"/>
+                                    <circle cx="140" cy="210" r="3" class="relation-endpoint"/>
+                                    <circle cx="140" cy="280" r="3" class="relation-endpoint"/>
+                                    <text x="150" y="245" class="relation-text">N:1</text>
+                                </g>
+
+                                <!-- 凡例 -->
+                                <g class="legend">
+                                    <rect x="580" y="50" width="180" height="120" class="legend-rect"/>
+                                    <text x="670" y="75" class="legend-title">凡例</text>
+                                    <line x1="590" y1="85" x2="750" y2="85" class="entity-line"/>
+                                    <text x="600" y="105" class="legend-text">🔑 主キー (Primary Key)</text>
+                                    <text x="600" y="125" class="legend-text">🔗 外部キー (Foreign Key)</text>
+                                    <line x1="590" y1="135" x2="620" y2="135" class="relation-line"/>
+                                    <text x="630" y="140" class="legend-text">実線: 物理的関係</text>
+                                    <line x1="590" y1="155" x2="620" y2="155" class="relation-line relation-dotted"/>
+                                    <text x="630" y="160" class="legend-text">点線: 論理的関係</text>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
             </div>
 

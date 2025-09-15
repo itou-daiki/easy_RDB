@@ -705,3 +705,84 @@ function showSuggestions(suggestions, cursor) {
         completeSingle: false
     });
 }
+
+// ER図の表示/非表示を切り替え
+function toggleERDiagram() {
+    const container = document.getElementById('erDiagramContainer');
+    const button = document.getElementById('toggleERDiagram');
+
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        button.innerHTML = '<span>👁️</span>非表示';
+        // アニメーション効果
+        container.style.opacity = '0';
+        container.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            container.style.transition = 'all 0.3s ease';
+            container.style.opacity = '1';
+            container.style.transform = 'translateY(0)';
+        }, 10);
+    } else {
+        container.style.transition = 'all 0.3s ease';
+        container.style.opacity = '0';
+        container.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            container.style.display = 'none';
+            button.innerHTML = '<span>👁️</span>表示';
+        }, 300);
+    }
+}
+
+// ER図のテーブルクリック処理
+function handleTableClick(tableName) {
+    // 対応するクエリを自動挿入
+    const queries = {
+        users: 'SELECT * FROM users;',
+        orders: 'SELECT * FROM orders;',
+        departments: 'SELECT * FROM departments;'
+    };
+
+    if (queries[tableName] && editor) {
+        editor.setValue(queries[tableName]);
+        editor.focus();
+
+        // テーブルをハイライト
+        highlightTable(tableName);
+    }
+}
+
+// テーブルハイライト効果
+function highlightTable(tableName) {
+    // 全テーブルのハイライトをリセット
+    document.querySelectorAll('.table-entity').forEach(entity => {
+        entity.classList.remove('highlighted');
+    });
+
+    // 指定されたテーブルをハイライト
+    const targetEntity = document.querySelector(`[data-table="${tableName}"]`);
+    if (targetEntity) {
+        targetEntity.classList.add('highlighted');
+        setTimeout(() => {
+            targetEntity.classList.remove('highlighted');
+        }, 2000);
+    }
+}
+
+// ページ読み込み時にER図のイベントリスナーを設定
+document.addEventListener('DOMContentLoaded', function() {
+    // 既存のCodeMirror初期化コードの後に追加
+
+    // ER図のテーブルエンティティにクリックイベントを追加
+    document.querySelectorAll('.table-entity').forEach(entity => {
+        entity.addEventListener('click', function() {
+            const tableName = this.getAttribute('data-table');
+            handleTableClick(tableName);
+        });
+    });
+
+    // デフォルトでER図を表示状態にする
+    const container = document.getElementById('erDiagramContainer');
+    const button = document.getElementById('toggleERDiagram');
+    container.style.display = 'block';
+    button.innerHTML = '<span>👁️</span>非表示';
+});
