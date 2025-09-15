@@ -217,10 +217,12 @@ function processColumnSelect(query, table) {
 }
 
 function processInsert(query) {
-    const sql = query.toLowerCase().replace(/\s+/g, ' ');
+    // \n を実際の改行に変換し、エスケープされたクォートを処理
+    const cleanQuery = query.replace(/\\n/g, '\n').replace(/\\'/g, "'").replace(/\\"/g, '"');
+    const sql = cleanQuery.toLowerCase().replace(/\s+/g, ' ');
 
     if (sql.includes('insert into users')) {
-        const valuesMatch = query.match(/values\s*\(([^)]+)\)/is);
+        const valuesMatch = cleanQuery.match(/VALUES\s*\(([^)]+)\)/i);
         if (valuesMatch) {
             // エスケープ文字とクォートを適切に処理
             const values = valuesMatch[1].split(',').map(v =>
@@ -242,7 +244,7 @@ function processInsert(query) {
     }
 
     if (sql.includes('insert into orders')) {
-        const valuesMatch = query.match(/values\s*\(([^)]+)\)/is);
+        const valuesMatch = cleanQuery.match(/VALUES\s*\(([^)]+)\)/i);
         if (valuesMatch) {
             const values = valuesMatch[1].split(',').map(v =>
                 v.trim().replace(/\\?['"]/g, '').replace(/\\\\/g, '\\')
@@ -263,7 +265,7 @@ function processInsert(query) {
     }
 
     if (sql.includes('insert into departments')) {
-        const valuesMatch = query.match(/values\s*\(([^)]+)\)/is);
+        const valuesMatch = cleanQuery.match(/VALUES\s*\(([^)]+)\)/i);
         if (valuesMatch) {
             const values = valuesMatch[1].split(',').map(v =>
                 v.trim().replace(/\\?['"]/g, '').replace(/\\\\/g, '\\')
@@ -285,12 +287,24 @@ function processInsert(query) {
 }
 
 function processUpdate(query) {
-    const sql = query.toLowerCase().replace(/\s+/g, ' ');
+    // 元のクエリを保持
+    const originalQuery = query;
+
+    // \n を実際の改行に変換し、エスケープされたクォートを処理
+    const cleanQuery = query.replace(/\\n/g, '\n').replace(/\\'/g, "'").replace(/\\"/g, '"');
+    const sql = cleanQuery.toLowerCase().replace(/\s+/g, ' ');
+
+    // デバッグ用（開発時のみ）
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log('Original query:', originalQuery);
+        console.log('Clean query:', cleanQuery);
+        console.log('SQL:', sql);
+    }
 
     if (sql.includes('update users')) {
-        // 改行やエスケープ文字を考慮した正規表現
-        const setMatch = query.match(/set\s+(\w+)\s*=\s*\\?['"]([^'"\\]+)\\?['"]/is);
-        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+        // より柔軟な正規表現パターン
+        const setMatch = cleanQuery.match(/SET\s+(\w+)\s*=\s*['"]([^'"]+)['"]/i);
+        const whereMatch = cleanQuery.match(/WHERE\s+id\s*=\s*(\d+)/i);
 
         if (setMatch && whereMatch) {
             const field = setMatch[1];
@@ -300,17 +314,19 @@ function processUpdate(query) {
             const user = database.users.find(u => u.id === id);
             if (user) {
                 user[field] = value;
-                return `ユーザーID ${id} の ${field} を更新しました。`;
+                return `ユーザーID ${id} の ${field} を "${value}" に更新しました。`;
             } else {
                 return `ユーザーID ${id} が見つかりませんでした。`;
             }
+        } else {
+            return `UPDATE文の構文解析に失敗しました。SET句またはWHERE句が正しくありません。`;
         }
     }
 
-    // ordersテーブルの更新も追加
+    // ordersテーブルの更新
     if (sql.includes('update orders')) {
-        const setMatch = query.match(/set\s+(\w+)\s*=\s*\\?['"]?([^'"\\,\s]+)\\?['"]?/is);
-        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+        const setMatch = cleanQuery.match(/SET\s+(\w+)\s*=\s*['"]?([^'"]+)['"]?/i);
+        const whereMatch = cleanQuery.match(/WHERE\s+id\s*=\s*(\d+)/i);
 
         if (setMatch && whereMatch) {
             const field = setMatch[1];
@@ -325,21 +341,47 @@ function processUpdate(query) {
             const order = database.orders.find(o => o.id === id);
             if (order) {
                 order[field] = value;
-                return `注文ID ${id} の ${field} を更新しました。`;
+                return `注文ID ${id} の ${field} を "${value}" に更新しました。`;
             } else {
                 return `注文ID ${id} が見つかりませんでした。`;
             }
+        } else {
+            return `UPDATE文の構文解析に失敗しました。SET句またはWHERE句が正しくありません。`;
         }
     }
 
-    throw new Error('UPDATE文の解析に失敗しました。対応しているテーブル: users, orders');
+    // departmentsテーブルの更新
+    if (sql.includes('update departments')) {
+        const setMatch = cleanQuery.match(/SET\s+(\w+)\s*=\s*['"]([^'"]+)['"]/i);
+        const whereMatch = cleanQuery.match(/WHERE\s+id\s*=\s*(\d+)/i);
+
+        if (setMatch && whereMatch) {
+            const field = setMatch[1];
+            const value = setMatch[2];
+            const id = parseInt(whereMatch[1]);
+
+            const dept = database.departments.find(d => d.id === id);
+            if (dept) {
+                dept[field] = value;
+                return `部署ID ${id} の ${field} を "${value}" に更新しました。`;
+            } else {
+                return `部署ID ${id} が見つかりませんでした。`;
+            }
+        } else {
+            return `UPDATE文の構文解析に失敗しました。SET句またはWHERE句が正しくありません。`;
+        }
+    }
+
+    throw new Error('UPDATE文の解析に失敗しました。対応しているテーブル: users, orders, departments');
 }
 
 function processDelete(query) {
-    const sql = query.toLowerCase().replace(/\s+/g, ' ');
+    // \n を実際の改行に変換し、エスケープされたクォートを処理
+    const cleanQuery = query.replace(/\\n/g, '\n').replace(/\\'/g, "'").replace(/\\"/g, '"');
+    const sql = cleanQuery.toLowerCase().replace(/\s+/g, ' ');
 
     if (sql.includes('delete from users')) {
-        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+        const whereMatch = cleanQuery.match(/WHERE\s+id\s*=\s*(\d+)/i);
 
         if (whereMatch) {
             const id = parseInt(whereMatch[1]);
@@ -355,7 +397,7 @@ function processDelete(query) {
     }
 
     if (sql.includes('delete from orders')) {
-        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+        const whereMatch = cleanQuery.match(/WHERE\s+id\s*=\s*(\d+)/i);
 
         if (whereMatch) {
             const id = parseInt(whereMatch[1]);
@@ -371,7 +413,7 @@ function processDelete(query) {
     }
 
     if (sql.includes('delete from departments')) {
-        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+        const whereMatch = cleanQuery.match(/WHERE\s+id\s*=\s*(\d+)/i);
 
         if (whereMatch) {
             const id = parseInt(whereMatch[1]);
