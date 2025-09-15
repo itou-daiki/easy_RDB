@@ -20,6 +20,17 @@
         <div class="tutorial-layout">
             <div class="tutorial-sidebar">
                 <h3>📚 目次</h3>
+                
+                <div class="progress-container">
+                    <div class="progress-text">
+                        <span>学習進度</span>
+                        <span id="progress-percentage">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+                
                 <ul class="tutorial-nav">
                     <li><a href="#intro" data-section="intro">SQLとは</a></li>
                     <li><a href="#select" data-section="select">SELECT文</a></li>
@@ -48,6 +59,7 @@
 
                     <div class="code-example">
                         <h4>基本的な書式</h4>
+                        <button class="copy-btn" onclick="copyCode(this)">📋 コピー</button>
                         <pre><code>-- これはコメントです
 SELECT column1, column2
 FROM table_name
@@ -62,6 +74,7 @@ WHERE condition;</code></pre>
 
                     <h3>基本構文</h3>
                     <div class="code-example">
+                        <button class="copy-btn" onclick="copyCode(this)">📋 コピー</button>
                         <pre><code>SELECT column1, column2, ...
 FROM table_name;</code></pre>
                     </div>

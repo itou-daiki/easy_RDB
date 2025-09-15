@@ -7,6 +7,7 @@
     <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/hint/show-hint.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -29,7 +30,63 @@
                 </div>
                 <div class="editor-container">
                     <textarea id="sqlEditor" style="display: none;"></textarea>
-                    
+
+                    <div class="query-helpers">
+                        <div class="helper-section">
+                            <h4>基本クエリ</h4>
+                            <div class="helper-buttons">
+                                <button class="btn btn-helper" onclick="insertQuery('SELECT * FROM users;')">
+                                    <span>📋</span>
+                                    SELECT *
+                                </button>
+                                <button class="btn btn-helper" onclick="insertQuery('SELECT name, email FROM users;')">
+                                    <span>📝</span>
+                                    SELECT 指定列
+                                </button>
+                                <button class="btn btn-helper" onclick="insertQuery('SELECT * FROM users WHERE age > 25;')">
+                                    <span>🔍</span>
+                                    WHERE条件
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="helper-section">
+                            <h4>高度なクエリ</h4>
+                            <div class="helper-buttons">
+                                <button class="btn btn-helper" onclick="insertQuery('SELECT u.name, o.product_name, o.price\\nFROM users u\\nJOIN orders o ON u.id = o.user_id;')">
+                                    <span>🔗</span>
+                                    JOIN
+                                </button>
+                                <button class="btn btn-helper" onclick="insertQuery('SELECT department, COUNT(*) as count\\nFROM users\\nGROUP BY department;')">
+                                    <span>📊</span>
+                                    GROUP BY
+                                </button>
+                                <button class="btn btn-helper" onclick="insertQuery('SELECT * FROM users\\nORDER BY age DESC;')">
+                                    <span>⬇️</span>
+                                    ORDER BY
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="helper-section">
+                            <h4>データ操作</h4>
+                            <div class="helper-buttons">
+                                <button class="btn btn-helper" onclick="insertQuery('INSERT INTO users (name, email, age, department)\\nVALUES (\\\'田中太郎\\\', \\\'tanaka@example.com\\\', 30, \\\'営業部\\\');')">
+                                    <span>➕</span>
+                                    INSERT
+                                </button>
+                                <button class="btn btn-helper" onclick="insertQuery('UPDATE users\\nSET email = \\\'new@example.com\\\'\\nWHERE id = 1;')">
+                                    <span>✏️</span>
+                                    UPDATE
+                                </button>
+                                <button class="btn btn-helper" onclick="insertQuery('DELETE FROM users\\nWHERE id = 1;')">
+                                    <span>🗑️</span>
+                                    DELETE
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="button-group">
                         <button class="btn btn-primary" onclick="executeQuery()">
                             <span>▶️</span>
@@ -60,7 +117,7 @@
                         <span>📊</span>
                         Database Schema
                     </h3>
-                    
+
                     <div class="schema-table">
                         <h4>users</h4>
                         <div class="schema-content">
@@ -69,6 +126,12 @@
                             <p><strong>email:</strong> TEXT</p>
                             <p><strong>age:</strong> INTEGER</p>
                             <p><strong>department:</strong> TEXT</p>
+                        </div>
+                        <div class="table-actions">
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'select'))">📋 SELECT</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'insert'))">➕ INSERT</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'update'))">✏️ UPDATE</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'delete'))">🗑️ DELETE</button>
                         </div>
                     </div>
 
@@ -81,6 +144,12 @@
                             <p><strong>price:</strong> INTEGER</p>
                             <p><strong>order_date:</strong> TEXT</p>
                         </div>
+                        <div class="table-actions">
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('orders', 'select'))">📋 SELECT</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('orders', 'insert'))">➕ INSERT</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('orders', 'update'))">✏️ UPDATE</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('orders', 'delete'))">🗑️ DELETE</button>
+                        </div>
                     </div>
 
                     <div class="schema-table">
@@ -89,6 +158,182 @@
                             <p><strong>id:</strong> INTEGER (PRIMARY KEY)</p>
                             <p><strong>name:</strong> TEXT</p>
                             <p><strong>manager:</strong> TEXT</p>
+                        </div>
+                        <div class="table-actions">
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('departments', 'select'))">📋 SELECT</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('departments', 'insert'))">➕ INSERT</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('departments', 'update'))">✏️ UPDATE</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('departments', 'delete'))">🗑️ DELETE</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-tips">
+                    <h3>
+                        <span>💡</span>
+                        ショートカット
+                    </h3>
+                    <div class="tips-content">
+                        <p><kbd>Ctrl+Enter</kbd> : クエリ実行</p>
+                        <p><kbd>Ctrl+↑/↓</kbd> : 履歴ナビゲーション</p>
+                        <p><kbd>Ctrl+Space</kbd> : オートコンプリート</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tables-overview">
+            <div class="panel-header">
+                <span>📋</span>
+                テーブル一覧とサンプルデータ
+            </div>
+            <div class="tables-content">
+                <div class="table-preview-grid">
+                    <div class="table-preview">
+                        <h4>users テーブル</h4>
+                        <div class="preview-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>id</th>
+                                        <th>name</th>
+                                        <th>email</th>
+                                        <th>age</th>
+                                        <th>department</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>田中太郎</td>
+                                        <td>tanaka@example.com</td>
+                                        <td>28</td>
+                                        <td>営業部</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>佐藤花子</td>
+                                        <td>sato@example.com</td>
+                                        <td>32</td>
+                                        <td>開発部</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>鈴木一郎</td>
+                                        <td>suzuki@example.com</td>
+                                        <td>26</td>
+                                        <td>営業部</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5" class="more-data">... さらに2件のデータ</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-actions-inline">
+                            <button class="btn btn-mini" onclick="insertQuery('SELECT * FROM users;')">📋 全データ表示</button>
+                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'insert'))">➕ INSERT例</button>
+                        </div>
+                    </div>
+
+                    <div class="table-preview">
+                        <h4>orders テーブル</h4>
+                        <div class="preview-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>id</th>
+                                        <th>user_id</th>
+                                        <th>product_name</th>
+                                        <th>price</th>
+                                        <th>order_date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>1</td>
+                                        <td>ノートPC</td>
+                                        <td>80000</td>
+                                        <td>2024-01-15</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>2</td>
+                                        <td>マウス</td>
+                                        <td>3000</td>
+                                        <td>2024-01-20</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>1</td>
+                                        <td>キーボード</td>
+                                        <td>8000</td>
+                                        <td>2024-02-01</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5" class="more-data">... さらに2件のデータ</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-actions-inline">
+                            <button class="btn btn-mini" onclick="insertQuery('SELECT * FROM orders;')">📋 全データ表示</button>
+                            <button class="btn btn-mini" onclick="insertQuery('SELECT u.name, o.product_name, o.price FROM users u JOIN orders o ON u.id = o.user_id;')">🔗 JOIN例</button>
+                        </div>
+                    </div>
+
+                    <div class="table-preview">
+                        <h4>departments テーブル</h4>
+                        <div class="preview-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>id</th>
+                                        <th>name</th>
+                                        <th>manager</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>営業部</td>
+                                        <td>営業部長</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>開発部</td>
+                                        <td>技術部長</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>人事部</td>
+                                        <td>人事部長</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-actions-inline">
+                            <button class="btn btn-mini" onclick="insertQuery('SELECT * FROM departments;')">📋 全データ表示</button>
+                            <button class="btn btn-mini" onclick="insertQuery('SELECT department, COUNT(*) as count FROM users GROUP BY department;')">📊 部署別集計</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relationship-info">
+                    <h4>🔗 テーブル関係</h4>
+                    <div class="relationship-diagram">
+                        <div class="relationship-item">
+                            <span class="table-name">users</span>
+                            <span class="relation-arrow">→</span>
+                            <span class="table-name">orders</span>
+                            <span class="relation-desc">(users.id = orders.user_id)</span>
+                        </div>
+                        <div class="relationship-item">
+                            <span class="table-name">users</span>
+                            <span class="relation-arrow">→</span>
+                            <span class="table-name">departments</span>
+                            <span class="relation-desc">(users.department = departments.name)</span>
                         </div>
                     </div>
                 </div>
@@ -134,6 +379,8 @@
     <!-- CodeMirror JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/hint/sql-hint.min.js"></script>
     <!-- Custom JavaScript -->
     <script src="script.js"></script>
 </body>

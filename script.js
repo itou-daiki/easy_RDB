@@ -14,10 +14,13 @@ document.addEventListener('DOMContentLoaded', function() {
         lineWrapping: true,
         extraKeys: {
             "Ctrl-Enter": executeQuery,
-            "Cmd-Enter": executeQuery
+            "Cmd-Enter": executeQuery,
+            "Ctrl-Up": () => navigateHistory('up'),
+            "Ctrl-Down": () => navigateHistory('down'),
+            "Ctrl-Space": showAutoComplete
         }
     });
-    
+
     editor.setValue("SELECT * FROM users;\n\n-- ここにSQLクエリを入力してください\n-- 例: SELECT name, email FROM users WHERE age > 25;");
     editor.focus();
 });
@@ -59,6 +62,9 @@ function executeQuery() {
         showResult('SQLクエリを入力してください。', 'error');
         return;
     }
+
+    // クエリを履歴に追加
+    addToHistory(query);
 
     try {
         const result = processSQL(query);
@@ -347,4 +353,208 @@ function clearEditor() {
     }
     document.getElementById('resultArea').style.display = 'none';
     document.getElementById('queryResult').innerHTML = '';
+}
+
+// クエリ挿入機能
+function insertQuery(queryTemplate) {
+    if (editor) {
+        editor.setValue(queryTemplate);
+        editor.focus();
+        // カーソルを末尾に移動
+        editor.setCursor(editor.lineCount(), 0);
+    }
+}
+
+// テーブル固有のクエリ生成
+function generateTableQuery(tableName, action = 'select') {
+    const schemas = {
+        users: {
+            columns: ['id', 'name', 'email', 'age', 'department'],
+            primaryKey: 'id'
+        },
+        orders: {
+            columns: ['id', 'user_id', 'product_name', 'price', 'order_date'],
+            primaryKey: 'id'
+        },
+        departments: {
+            columns: ['id', 'name', 'manager'],
+            primaryKey: 'id'
+        }
+    };
+
+    const schema = schemas[tableName];
+    if (!schema) return '';
+
+    switch (action) {
+        case 'select':
+            return `SELECT ${schema.columns.join(', ')}\nFROM ${tableName};`;
+        case 'insert':
+            const sampleValues = schema.columns.slice(1).map((col, index) => {
+                if (col.includes('id') && col !== 'id') return '1';
+                if (col.includes('age')) return '25';
+                if (col.includes('price')) return '1000';
+                if (col.includes('date')) return "'2024-01-01'";
+                return `'sample_${col}'`;
+            });
+            return `INSERT INTO ${tableName} (${schema.columns.slice(1).join(', ')})\nVALUES (${sampleValues.join(', ')});`;
+        case 'update':
+            return `UPDATE ${tableName}\nSET ${schema.columns[1]} = 'new_value'\nWHERE ${schema.primaryKey} = 1;`;
+        case 'delete':
+            return `DELETE FROM ${tableName}\nWHERE ${schema.primaryKey} = 1;`;
+        default:
+            return '';
+    }
+}
+
+// スマートクエリ補完機能
+function smartQueryCompletion(currentQuery) {
+    const query = currentQuery.toLowerCase().trim();
+
+    // SELECT の場合
+    if (query.startsWith('select') && !query.includes('from')) {
+        return ['users', 'orders', 'departments'].map(table =>
+            `${currentQuery} FROM ${table};`
+        );
+    }
+
+    // WHERE句の提案
+    if (query.includes('from users') && !query.includes('where')) {
+        return [
+            `${currentQuery} WHERE age > 25;`,
+            `${currentQuery} WHERE department = '営業部';`,
+            `${currentQuery} WHERE name LIKE '%田中%';`
+        ];
+    }
+
+    return [];
+}
+
+// クエリ履歴機能
+let queryHistory = [];
+let historyIndex = -1;
+
+function addToHistory(query) {
+    if (query.trim() && !queryHistory.includes(query)) {
+        queryHistory.unshift(query);
+        if (queryHistory.length > 50) {
+            queryHistory = queryHistory.slice(0, 50);
+        }
+    }
+    historyIndex = -1;
+}
+
+function navigateHistory(direction) {
+    if (queryHistory.length === 0) return;
+
+    if (direction === 'up') {
+        historyIndex = Math.min(historyIndex + 1, queryHistory.length - 1);
+    } else {
+        historyIndex = Math.max(historyIndex - 1, -1);
+    }
+
+    const query = historyIndex === -1 ? '' : queryHistory[historyIndex];
+    if (editor) {
+        editor.setValue(query);
+        editor.focus();
+    }
+}
+
+// オートコンプリート機能
+function showAutoComplete() {
+    if (!editor) return;
+
+    const cursor = editor.getCursor();
+    const line = editor.getLine(cursor.line);
+    const currentWord = getCurrentWord(line, cursor.ch);
+    const suggestions = getSuggestions(currentWord, line);
+
+    if (suggestions.length > 0) {
+        showSuggestions(suggestions, cursor);
+    }
+}
+
+function getCurrentWord(line, pos) {
+    const start = line.lastIndexOf(' ', pos - 1) + 1;
+    const end = line.indexOf(' ', pos);
+    return line.substring(start, end === -1 ? line.length : end);
+}
+
+function getSuggestions(word, line) {
+    const suggestions = [];
+    const lowerWord = word.toLowerCase();
+    const lowerLine = line.toLowerCase();
+
+    // SQLキーワード
+    const sqlKeywords = [
+        'SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE',
+        'JOIN', 'INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN',
+        'GROUP BY', 'ORDER BY', 'HAVING', 'LIMIT',
+        'COUNT', 'SUM', 'AVG', 'MAX', 'MIN',
+        'AND', 'OR', 'NOT', 'LIKE', 'IN', 'BETWEEN'
+    ];
+
+    // テーブル名
+    const tables = ['users', 'orders', 'departments'];
+
+    // カラム名
+    const columns = {
+        users: ['id', 'name', 'email', 'age', 'department'],
+        orders: ['id', 'user_id', 'product_name', 'price', 'order_date'],
+        departments: ['id', 'name', 'manager']
+    };
+
+    // キーワード提案
+    sqlKeywords.forEach(keyword => {
+        if (keyword.toLowerCase().startsWith(lowerWord)) {
+            suggestions.push({
+                text: keyword,
+                displayText: keyword,
+                className: 'autocomplete-keyword'
+            });
+        }
+    });
+
+    // テーブル名提案
+    if (lowerLine.includes('from') || lowerLine.includes('join')) {
+        tables.forEach(table => {
+            if (table.toLowerCase().startsWith(lowerWord)) {
+                suggestions.push({
+                    text: table,
+                    displayText: `${table} (table)`,
+                    className: 'autocomplete-table'
+                });
+            }
+        });
+    }
+
+    // カラム名提案
+    Object.entries(columns).forEach(([tableName, tableCols]) => {
+        if (lowerLine.includes(tableName)) {
+            tableCols.forEach(col => {
+                if (col.toLowerCase().startsWith(lowerWord)) {
+                    suggestions.push({
+                        text: col,
+                        displayText: `${col} (${tableName})`,
+                        className: 'autocomplete-column'
+                    });
+                }
+            });
+        }
+    });
+
+    return suggestions.slice(0, 10); // 最大10個まで
+}
+
+function showSuggestions(suggestions, cursor) {
+    // 簡単な提案表示（実際のCodeMirrorのhint機能を使用）
+    const hints = {
+        list: suggestions,
+        from: cursor,
+        to: cursor
+    };
+
+    editor.showHint({
+        hint: () => hints,
+        completeSingle: false
+    });
 }

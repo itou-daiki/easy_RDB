@@ -118,46 +118,43 @@ document.addEventListener('click', function(e) {
 });
 
 // Add copy to clipboard functionality for code blocks
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('copy-btn') || e.target.closest('.copy-btn')) {
-        const button = e.target.classList.contains('copy-btn') ? e.target : e.target.closest('.copy-btn');
-        const codeBlock = button.nextElementSibling.querySelector('code');
+function copyCode(button) {
+    const codeBlock = button.nextElementSibling.querySelector('code');
+    
+    if (codeBlock) {
+        // Get text content without HTML tags
+        const text = codeBlock.textContent || codeBlock.innerText;
         
-        if (codeBlock) {
-            // Get text content without HTML tags
-            const text = codeBlock.textContent || codeBlock.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            // Show feedback
+            const originalText = button.textContent;
+            button.textContent = '✓ コピー完了!';
+            button.classList.add('copied');
             
-            navigator.clipboard.writeText(text).then(() => {
-                // Show feedback
-                const originalText = button.textContent;
-                button.textContent = '✓ コピー完了!';
-                button.style.color = '#3fb950';
-                
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.style.color = '';
-                }, 2000);
-            }).catch(() => {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                
-                const originalText = button.textContent;
-                button.textContent = '✓ コピー完了!';
-                button.style.color = '#3fb950';
-                
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.style.color = '';
-                }, 2000);
-            });
-        }
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('copied');
+            }, 2000);
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            const originalText = button.textContent;
+            button.textContent = '✓ コピー完了!';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('copied');
+            }, 2000);
+        });
     }
-});
+}
 
 // Add keyboard navigation
 document.addEventListener('keydown', function(e) {
@@ -196,10 +193,19 @@ function updateProgress() {
             const navLink = document.querySelector(`[data-section="${section.id}"]`);
             if (navLink && !navLink.classList.contains('visited')) {
                 navLink.classList.add('visited');
-                navLink.innerHTML += ' ✓';
             }
         }
     });
+    
+    // Update progress bar
+    const progressPercentage = Math.round((visitedSections.length / sections.length) * 100);
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-percentage');
+    
+    if (progressFill && progressText) {
+        progressFill.style.width = progressPercentage + '%';
+        progressText.textContent = progressPercentage + '%';
+    }
 }
 
 // Track section visits
