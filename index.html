@@ -32,9 +32,9 @@
                     <textarea id="sqlEditor" style="display: none;"></textarea>
 
                     <div class="query-helpers">
-                        <div class="helper-section">
-                            <h4>基本クエリ</h4>
-                            <div class="helper-buttons">
+                        <div class="helper-buttons-compact">
+                            <div class="helper-category">
+                                <span class="category-label">基本クエリ</span>
                                 <button class="btn btn-helper" onclick="insertQuery('SELECT * FROM users;')">
                                     <span>📋</span>
                                     SELECT *
@@ -48,11 +48,9 @@
                                     WHERE条件
                                 </button>
                             </div>
-                        </div>
 
-                        <div class="helper-section">
-                            <h4>高度なクエリ</h4>
-                            <div class="helper-buttons">
+                            <div class="helper-category">
+                                <span class="category-label">高度なクエリ</span>
                                 <button class="btn btn-helper" onclick="insertQuery('SELECT u.name, o.product_name, o.price\\nFROM users u\\nJOIN orders o ON u.id = o.user_id;')">
                                     <span>🔗</span>
                                     JOIN
@@ -66,11 +64,9 @@
                                     ORDER BY
                                 </button>
                             </div>
-                        </div>
 
-                        <div class="helper-section">
-                            <h4>データ操作</h4>
-                            <div class="helper-buttons">
+                            <div class="helper-category">
+                                <span class="category-label">データ操作</span>
                                 <button class="btn btn-helper" onclick="insertQuery('INSERT INTO users (name, email, age, department)\\nVALUES (\\\'田中太郎\\\', \\\'tanaka@example.com\\\', 30, \\\'営業部\\\');')">
                                     <span>➕</span>
                                     INSERT
