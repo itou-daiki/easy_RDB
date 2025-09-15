@@ -153,7 +153,11 @@ function processSelect(query) {
     }
 
     if (sql.includes('*') && sql.includes('from departments')) {
-        return [...database.departments];
+        let result = [...database.departments];
+        if (sql.includes('where')) {
+            result = filterData(result, query);
+        }
+        return result;
     }
 
     // JOIN操作
@@ -171,17 +175,26 @@ function processSelect(query) {
         return processColumnSelect(query, 'users');
     }
 
+    if (sql.includes('from orders')) {
+        return processColumnSelect(query, 'orders');
+    }
+
+    if (sql.includes('from departments')) {
+        return processColumnSelect(query, 'departments');
+    }
+
     throw new Error('クエリを解析できませんでした。より簡単なクエリを試してください。');
 }
 
 function filterData(data, query) {
     const sql = query.toLowerCase();
-    
+
+    // 年齢の条件
     if (sql.includes('age >')) {
         const ageMatch = query.match(/age\s*>\s*(\d+)/i);
         if (ageMatch) {
             const age = parseInt(ageMatch[1]);
-            return data.filter(item => item.age > age);
+            return data.filter(item => item.age && item.age > age);
         }
     }
 
@@ -189,15 +202,99 @@ function filterData(data, query) {
         const ageMatch = query.match(/age\s*<\s*(\d+)/i);
         if (ageMatch) {
             const age = parseInt(ageMatch[1]);
-            return data.filter(item => item.age < age);
+            return data.filter(item => item.age && item.age < age);
         }
     }
 
+    if (sql.includes('age =')) {
+        const ageMatch = query.match(/age\s*=\s*(\d+)/i);
+        if (ageMatch) {
+            const age = parseInt(ageMatch[1]);
+            return data.filter(item => item.age === age);
+        }
+    }
+
+    // 価格の条件
+    if (sql.includes('price >')) {
+        const priceMatch = query.match(/price\s*>\s*(\d+)/i);
+        if (priceMatch) {
+            const price = parseInt(priceMatch[1]);
+            return data.filter(item => item.price && item.price > price);
+        }
+    }
+
+    if (sql.includes('price <')) {
+        const priceMatch = query.match(/price\s*<\s*(\d+)/i);
+        if (priceMatch) {
+            const price = parseInt(priceMatch[1]);
+            return data.filter(item => item.price && item.price < price);
+        }
+    }
+
+    // 部署の条件
     if (sql.includes('department =')) {
         const deptMatch = query.match(/department\s*=\s*['"]([^'"]+)['"]/i);
         if (deptMatch) {
             const dept = deptMatch[1];
             return data.filter(item => item.department === dept);
+        }
+    }
+
+    // 商品名の条件
+    if (sql.includes('product_name =')) {
+        const productMatch = query.match(/product_name\s*=\s*['"]([^'"]+)['"]/i);
+        if (productMatch) {
+            const product = productMatch[1];
+            return data.filter(item => item.product_name === product);
+        }
+    }
+
+    // LIKE条件
+    if (sql.includes('like')) {
+        const likeMatch = query.match(/(\w+)\s+like\s+['"]([^'"]+)['"]/i);
+        if (likeMatch) {
+            const column = likeMatch[1];
+            const pattern = likeMatch[2].replace(/%/g, '.*');
+            const regex = new RegExp(pattern, 'i');
+            return data.filter(item => {
+                const value = item[column];
+                return value && regex.test(String(value));
+            });
+        }
+    }
+
+    // ID条件
+    if (sql.includes('id =')) {
+        const idMatch = query.match(/id\s*=\s*(\d+)/i);
+        if (idMatch) {
+            const id = parseInt(idMatch[1]);
+            return data.filter(item => item.id === id);
+        }
+    }
+
+    if (sql.includes('user_id =')) {
+        const userIdMatch = query.match(/user_id\s*=\s*(\d+)/i);
+        if (userIdMatch) {
+            const userId = parseInt(userIdMatch[1]);
+            return data.filter(item => item.user_id === userId);
+        }
+    }
+
+    // name条件（departments用）
+    if (sql.includes('name =')) {
+        const nameMatch = query.match(/name\s*=\s*['"]([^'"]+)['"]/i);
+        if (nameMatch) {
+            const name = nameMatch[1];
+            return data.filter(item => item.name === name);
+        }
+    }
+
+    // manager条件
+    if (sql.includes('manager =')) {
+        const managerMatch = query.match(/manager\s*=\s*['"]([^'"]+)['"]/i);
+        if (managerMatch) {
+            const manager = managerMatch[1];
+            return data.filter(item => item.manager === manager);
         }
     }
 
@@ -248,11 +345,72 @@ function processAggregate(query) {
 
 function processColumnSelect(query, table) {
     const sql = query.toLowerCase();
-    const data = database[table];
-    
-    // name, email の選択
-    if (sql.includes('name') && sql.includes('email')) {
-        return data.map(item => ({ name: item.name, email: item.email }));
+    let data = [...database[table]];
+
+    // WHERE句があれば先にフィルタリング
+    if (sql.includes('where')) {
+        data = filterData(data, query);
+    }
+
+    // ORDER BY句の処理
+    if (sql.includes('order by')) {
+        data = processOrderBy(data, query);
+    }
+
+    // SELECT文から列名を抽出する改良版
+    const selectMatch = query.match(/SELECT\s+(.*?)\s+FROM/i);
+    if (selectMatch) {
+        const columnsStr = selectMatch[1].trim();
+
+        // * の場合は全データ
+        if (columnsStr === '*') {
+            return data;
+        }
+
+        // カラム名を分割（カンマで区切られた）
+        const columns = columnsStr.split(',').map(col => col.trim());
+
+        // 各行について指定されたカラムのみを抽出
+        return data.map(row => {
+            const result = {};
+            columns.forEach(col => {
+                if (row.hasOwnProperty(col)) {
+                    result[col] = row[col];
+                }
+            });
+            return result;
+        });
+    }
+
+    return data;
+}
+
+// ORDER BY処理を追加
+function processOrderBy(data, query) {
+    const orderMatch = query.match(/ORDER\s+BY\s+(\w+)(\s+(ASC|DESC))?/i);
+    if (orderMatch) {
+        const column = orderMatch[1];
+        const direction = orderMatch[3] ? orderMatch[3].toUpperCase() : 'ASC';
+
+        return data.sort((a, b) => {
+            let aVal = a[column];
+            let bVal = b[column];
+
+            // 数値の場合は数値として比較
+            if (typeof aVal === 'number' && typeof bVal === 'number') {
+                return direction === 'ASC' ? aVal - bVal : bVal - aVal;
+            }
+
+            // 文字列の場合は文字列として比較
+            aVal = String(aVal).toLowerCase();
+            bVal = String(bVal).toLowerCase();
+
+            if (direction === 'ASC') {
+                return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+            } else {
+                return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+            }
+        });
     }
 
     return data;
@@ -345,13 +503,22 @@ function processUpdate(query) {
 
     if (sql.includes('update users')) {
         // より柔軟な正規表現パターン
-        const setMatch = cleanQuery.match(/SET\s+(\w+)\s*=\s*['"]([^'"]+)['"]/i);
+        const setMatch = cleanQuery.match(/SET\s+(\w+)\s*=\s*['"]?([^'"]+)['"]?/i);
         const whereMatch = cleanQuery.match(/WHERE\s+id\s*=\s*(\d+)/i);
 
         if (setMatch && whereMatch) {
             const field = setMatch[1];
-            const value = setMatch[2];
+            let value = setMatch[2];
             const id = parseInt(whereMatch[1]);
+
+            // 数値フィールドの場合は数値に変換し、変換できない場合はエラー
+            if (field === 'age') {
+                const numValue = parseInt(value);
+                if (isNaN(numValue)) {
+                    return `エラー: ${field} フィールドには数値を指定してください。入力値: "${value}"`;
+                }
+                value = numValue;
+            }
 
             const user = database.users.find(u => u.id === id);
             if (user) {
@@ -375,9 +542,13 @@ function processUpdate(query) {
             let value = setMatch[2];
             const id = parseInt(whereMatch[1]);
 
-            // 数値フィールドの場合は数値に変換
+            // 数値フィールドの場合は数値に変換し、変換できない場合はエラー
             if (field === 'price' || field === 'user_id') {
-                value = parseInt(value);
+                const numValue = parseInt(value);
+                if (isNaN(numValue)) {
+                    return `エラー: ${field} フィールドには数値を指定してください。入力値: "${value}"`;
+                }
+                value = numValue;
             }
 
             const order = database.orders.find(o => o.id === id);
@@ -583,6 +754,8 @@ function generateTableQuery(tableName, action = 'select') {
                 if (col.includes('age')) return '25';
                 if (col.includes('price')) return '1000';
                 if (col.includes('date')) return "'2024-01-01'";
+                if (col === 'manager') return "'新部長'";
+                if (col === 'name' && tableName === 'departments') return "'新部署'";
                 return `'sample_${col}'`;
             });
             return `INSERT INTO ${tableName} (${schema.columns.slice(1).join(', ')})\nVALUES (${sampleValues.join(', ')});`;
