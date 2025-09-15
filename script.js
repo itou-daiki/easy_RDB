@@ -217,71 +217,176 @@ function processColumnSelect(query, table) {
 }
 
 function processInsert(query) {
-    const sql = query.toLowerCase();
-    
+    const sql = query.toLowerCase().replace(/\s+/g, ' ');
+
     if (sql.includes('insert into users')) {
-        const valuesMatch = query.match(/values\s*\(([^)]+)\)/i);
+        const valuesMatch = query.match(/values\s*\(([^)]+)\)/is);
         if (valuesMatch) {
-            const values = valuesMatch[1].split(',').map(v => v.trim().replace(/['"]/g, ''));
+            // エスケープ文字とクォートを適切に処理
+            const values = valuesMatch[1].split(',').map(v =>
+                v.trim().replace(/\\?['"]/g, '').replace(/\\\\/g, '\\')
+            );
             const newId = Math.max(...database.users.map(u => u.id)) + 1;
-            
+
             const newUser = {
                 id: newId,
-                name: values[0],
-                email: values[1],
+                name: values[0] || '',
+                email: values[1] || '',
                 age: parseInt(values[2]) || 0,
                 department: values[3] || ''
             };
-            
+
             database.users.push(newUser);
             return `ユーザーが追加されました: ${newUser.name}`;
         }
     }
 
-    throw new Error('INSERT文の解析に失敗しました。');
+    if (sql.includes('insert into orders')) {
+        const valuesMatch = query.match(/values\s*\(([^)]+)\)/is);
+        if (valuesMatch) {
+            const values = valuesMatch[1].split(',').map(v =>
+                v.trim().replace(/\\?['"]/g, '').replace(/\\\\/g, '\\')
+            );
+            const newId = Math.max(...database.orders.map(o => o.id)) + 1;
+
+            const newOrder = {
+                id: newId,
+                user_id: parseInt(values[0]) || 1,
+                product_name: values[1] || '',
+                price: parseInt(values[2]) || 0,
+                order_date: values[3] || new Date().toISOString().split('T')[0]
+            };
+
+            database.orders.push(newOrder);
+            return `注文が追加されました: ${newOrder.product_name}`;
+        }
+    }
+
+    if (sql.includes('insert into departments')) {
+        const valuesMatch = query.match(/values\s*\(([^)]+)\)/is);
+        if (valuesMatch) {
+            const values = valuesMatch[1].split(',').map(v =>
+                v.trim().replace(/\\?['"]/g, '').replace(/\\\\/g, '\\')
+            );
+            const newId = Math.max(...database.departments.map(d => d.id)) + 1;
+
+            const newDept = {
+                id: newId,
+                name: values[0] || '',
+                manager: values[1] || ''
+            };
+
+            database.departments.push(newDept);
+            return `部署が追加されました: ${newDept.name}`;
+        }
+    }
+
+    throw new Error('INSERT文の解析に失敗しました。対応しているテーブル: users, orders, departments');
 }
 
 function processUpdate(query) {
-    const sql = query.toLowerCase();
-    
+    const sql = query.toLowerCase().replace(/\s+/g, ' ');
+
     if (sql.includes('update users')) {
-        const setMatch = query.match(/set\s+(\w+)\s*=\s*['"]([^'"]+)['"]/i);
-        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/i);
-        
+        // 改行やエスケープ文字を考慮した正規表現
+        const setMatch = query.match(/set\s+(\w+)\s*=\s*\\?['"]([^'"\\]+)\\?['"]/is);
+        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+
         if (setMatch && whereMatch) {
             const field = setMatch[1];
             const value = setMatch[2];
             const id = parseInt(whereMatch[1]);
-            
+
             const user = database.users.find(u => u.id === id);
             if (user) {
                 user[field] = value;
                 return `ユーザーID ${id} の ${field} を更新しました。`;
+            } else {
+                return `ユーザーID ${id} が見つかりませんでした。`;
             }
         }
     }
 
-    throw new Error('UPDATE文の解析に失敗しました。');
+    // ordersテーブルの更新も追加
+    if (sql.includes('update orders')) {
+        const setMatch = query.match(/set\s+(\w+)\s*=\s*\\?['"]?([^'"\\,\s]+)\\?['"]?/is);
+        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+
+        if (setMatch && whereMatch) {
+            const field = setMatch[1];
+            let value = setMatch[2];
+            const id = parseInt(whereMatch[1]);
+
+            // 数値フィールドの場合は数値に変換
+            if (field === 'price' || field === 'user_id') {
+                value = parseInt(value);
+            }
+
+            const order = database.orders.find(o => o.id === id);
+            if (order) {
+                order[field] = value;
+                return `注文ID ${id} の ${field} を更新しました。`;
+            } else {
+                return `注文ID ${id} が見つかりませんでした。`;
+            }
+        }
+    }
+
+    throw new Error('UPDATE文の解析に失敗しました。対応しているテーブル: users, orders');
 }
 
 function processDelete(query) {
-    const sql = query.toLowerCase();
-    
+    const sql = query.toLowerCase().replace(/\s+/g, ' ');
+
     if (sql.includes('delete from users')) {
-        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/i);
-        
+        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+
         if (whereMatch) {
             const id = parseInt(whereMatch[1]);
             const index = database.users.findIndex(u => u.id === id);
-            
+
             if (index !== -1) {
                 const deletedUser = database.users.splice(index, 1)[0];
                 return `ユーザー ${deletedUser.name} を削除しました。`;
+            } else {
+                return `ユーザーID ${id} が見つかりませんでした。`;
             }
         }
     }
 
-    throw new Error('DELETE文の解析に失敗しました。');
+    if (sql.includes('delete from orders')) {
+        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+
+        if (whereMatch) {
+            const id = parseInt(whereMatch[1]);
+            const index = database.orders.findIndex(o => o.id === id);
+
+            if (index !== -1) {
+                const deletedOrder = database.orders.splice(index, 1)[0];
+                return `注文ID ${id} (${deletedOrder.product_name}) を削除しました。`;
+            } else {
+                return `注文ID ${id} が見つかりませんでした。`;
+            }
+        }
+    }
+
+    if (sql.includes('delete from departments')) {
+        const whereMatch = query.match(/where\s+id\s*=\s*(\d+)/is);
+
+        if (whereMatch) {
+            const id = parseInt(whereMatch[1]);
+            const index = database.departments.findIndex(d => d.id === id);
+
+            if (index !== -1) {
+                const deletedDept = database.departments.splice(index, 1)[0];
+                return `部署 ${deletedDept.name} を削除しました。`;
+            } else {
+                return `部署ID ${id} が見つかりませんでした。`;
+            }
+        }
+    }
+
+    throw new Error('DELETE文の解析に失敗しました。対応しているテーブル: users, orders, departments');
 }
 
 function displayResult(result) {
