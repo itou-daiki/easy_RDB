@@ -718,7 +718,9 @@ function clearEditor() {
 // クエリ挿入機能
 function insertQuery(queryTemplate) {
     if (editor) {
-        editor.setValue(queryTemplate);
+        // エスケープされた改行文字とクォートを実際の文字に変換
+        const cleanQuery = queryTemplate.replace(/\\n/g, '\n').replace(/\\'/g, "'").replace(/\\"/g, '"');
+        editor.setValue(cleanQuery);
         editor.focus();
         // カーソルを末尾に移動
         editor.setCursor(editor.lineCount(), 0);
