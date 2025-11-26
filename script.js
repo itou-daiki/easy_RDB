@@ -17,12 +17,16 @@ document.addEventListener('DOMContentLoaded', function() {
             "Cmd-Enter": executeQuery,
             "Ctrl-Up": () => navigateHistory('up'),
             "Ctrl-Down": () => navigateHistory('down'),
-            "Ctrl-Space": showAutoComplete
+            "Ctrl-Space": showAutoComplete,
+            "Ctrl-Shift-F": formatSQL
         }
     });
 
     editor.setValue("SELECT * FROM users;\n\n-- ここにSQLクエリを入力してください\n-- 例: SELECT name, email FROM users WHERE age > 25;");
     editor.focus();
+
+    // 実行履歴を読み込む
+    loadQueryHistory();
 });
 
 // インメモリデータベース
@@ -107,12 +111,16 @@ function executeQuery() {
 
     // クエリを履歴に追加
     addToHistory(query);
+    saveToQueryHistory(query);
+
+    // ER図で使用されているテーブルをハイライト
+    highlightTablesInQuery(query);
 
     try {
         const result = processSQL(query);
         displayResult(result);
     } catch (error) {
-        showResult(`エラー: ${error.message}`, 'error');
+        showFriendlyError(error, query);
     }
 }
 
@@ -1003,3 +1011,308 @@ document.addEventListener('DOMContentLoaded', function() {
     container.style.display = 'block';
     button.innerHTML = '<span>👁️</span>非表示';
 });
+
+// ==================== 新機能: 学習支援機能 ====================
+
+// クエリ実行履歴の管理
+let executionHistory = [];
+
+function saveToQueryHistory(query) {
+    const timestamp = new Date().toLocaleString('ja-JP');
+    const historyItem = {
+        query: query,
+        timestamp: timestamp
+    };
+
+    executionHistory.unshift(historyItem);
+
+    // 最大50件まで保存
+    if (executionHistory.length > 50) {
+        executionHistory = executionHistory.slice(0, 50);
+    }
+
+    // localStorageに保存
+    localStorage.setItem('queryHistory', JSON.stringify(executionHistory));
+
+    // UIを更新
+    updateHistoryDisplay();
+}
+
+function loadQueryHistory() {
+    const stored = localStorage.getItem('queryHistory');
+    if (stored) {
+        executionHistory = JSON.parse(stored);
+        updateHistoryDisplay();
+    }
+}
+
+function updateHistoryDisplay() {
+    const historyList = document.getElementById('historyList');
+
+    if (executionHistory.length === 0) {
+        historyList.innerHTML = '<p class="empty-history">まだ履歴がありません</p>';
+        return;
+    }
+
+    let html = '';
+    executionHistory.slice(0, 10).forEach((item, index) => {
+        const shortQuery = item.query.length > 50
+            ? item.query.substring(0, 50) + '...'
+            : item.query;
+
+        html += `
+            <div class="history-item" onclick="loadFromHistory(${index})">
+                <div class="history-query">${escapeHtml(shortQuery)}</div>
+                <div class="history-time">${item.timestamp}</div>
+            </div>
+        `;
+    });
+
+    historyList.innerHTML = html;
+}
+
+function loadFromHistory(index) {
+    const item = executionHistory[index];
+    if (item && editor) {
+        editor.setValue(item.query);
+        editor.focus();
+    }
+}
+
+function clearHistory() {
+    if (confirm('実行履歴を全て削除しますか？')) {
+        executionHistory = [];
+        localStorage.removeItem('queryHistory');
+        updateHistoryDisplay();
+    }
+}
+
+// SQLフォーマット機能
+function formatSQL() {
+    if (!editor) return;
+
+    const query = editor.getValue().trim();
+    if (!query) return;
+
+    // 基本的なSQLフォーマット
+    let formatted = query
+        // 複数の空白を1つに
+        .replace(/\s+/g, ' ')
+        // 主要キーワードの前で改行
+        .replace(/\s+(SELECT|FROM|WHERE|JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|ON|GROUP BY|ORDER BY|HAVING|LIMIT|INSERT INTO|VALUES|UPDATE|SET|DELETE FROM)\s+/gi, '\n$1 ')
+        // ANDとORの前で改行（ただしBETWEEN ANDは除く）
+        .replace(/\s+(AND|OR)\s+(?!AND)/gi, '\n  $1 ')
+        // カンマの後にスペース
+        .replace(/,/g, ', ')
+        // セミコロンの前の空白を削除
+        .replace(/\s*;/g, ';')
+        // 先頭の改行を削除
+        .trim();
+
+    // インデント調整
+    const lines = formatted.split('\n');
+    let indentLevel = 0;
+    const indentedLines = lines.map(line => {
+        const trimmed = line.trim();
+
+        // インデントを減らすキーワード
+        if (trimmed.match(/^(FROM|WHERE|GROUP BY|ORDER BY|HAVING)/i)) {
+            indentLevel = 1;
+        } else if (trimmed.match(/^(AND|OR)/i)) {
+            indentLevel = 2;
+        } else if (trimmed.match(/^SELECT/i)) {
+            indentLevel = 0;
+        }
+
+        const indent = '  '.repeat(indentLevel);
+        return indent + trimmed;
+    });
+
+    formatted = indentedLines.join('\n');
+
+    editor.setValue(formatted);
+    showResult('SQLをフォーマットしました。', 'success');
+}
+
+// クエリ説明機能
+function explainQuery() {
+    if (!editor) return;
+
+    const query = editor.getValue().trim();
+    if (!query) {
+        showResult('説明するSQLクエリを入力してください。', 'error');
+        return;
+    }
+
+    const explanation = generateExplanation(query);
+
+    const explanationArea = document.getElementById('explanationArea');
+    const explanationContent = document.getElementById('explanationContent');
+
+    explanationContent.innerHTML = explanation;
+    explanationArea.style.display = 'block';
+
+    // スクロールして表示
+    explanationArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function generateExplanation(query) {
+    const sql = query.toLowerCase();
+    let explanation = '<div class="explanation-text">';
+
+    // クエリタイプの判定
+    if (sql.startsWith('select')) {
+        explanation += '<h4>📖 SELECT文（データの取得）</h4>';
+        explanation += '<p>このクエリはデータベースからデータを<strong>取得</strong>します。</p>';
+
+        // テーブルの特定
+        const tables = [];
+        if (sql.includes('from users')) tables.push('users');
+        if (sql.includes('from orders')) tables.push('orders');
+        if (sql.includes('from departments')) tables.push('departments');
+
+        if (tables.length > 0) {
+            explanation += `<p>📊 使用テーブル: <strong>${tables.join(', ')}</strong></p>`;
+        }
+
+        // JOINの説明
+        if (sql.includes('join')) {
+            explanation += '<p>🔗 <strong>JOIN</strong>: 複数のテーブルを関連付けてデータを取得しています。';
+            explanation += '関連するデータを組み合わせて、より詳細な情報を得ることができます。</p>';
+        }
+
+        // WHERE句の説明
+        if (sql.includes('where')) {
+            explanation += '<p>🔍 <strong>WHERE</strong>: 条件に合うデータのみを絞り込んでいます。';
+
+            if (sql.includes('age >') || sql.includes('age <')) {
+                explanation += '年齢による条件指定をしています。';
+            }
+            if (sql.includes('department =')) {
+                explanation += '特定の部署のデータのみを取得しています。';
+            }
+            explanation += '</p>';
+        }
+
+        // GROUP BYの説明
+        if (sql.includes('group by')) {
+            explanation += '<p>📊 <strong>GROUP BY</strong>: データをグループ化して集計しています。';
+            explanation += '同じ値を持つ行をまとめて、COUNT、SUM、AVGなどの集約関数を使えます。</p>';
+        }
+
+        // ORDER BYの説明
+        if (sql.includes('order by')) {
+            explanation += '<p>⬆️⬇️ <strong>ORDER BY</strong>: 結果を並べ替えています。';
+            if (sql.includes('desc')) {
+                explanation += '降順（大きい順）に並べています。';
+            } else {
+                explanation += '昇順（小さい順）に並べています。';
+            }
+            explanation += '</p>';
+        }
+
+        // 集約関数の説明
+        if (sql.includes('count')) {
+            explanation += '<p>🔢 <strong>COUNT</strong>: レコードの件数を数えています。</p>';
+        }
+        if (sql.includes('sum')) {
+            explanation += '<p>➕ <strong>SUM</strong>: 数値の合計を計算しています。</p>';
+        }
+        if (sql.includes('avg')) {
+            explanation += '<p>📈 <strong>AVG</strong>: 数値の平均値を計算しています。</p>';
+        }
+
+    } else if (sql.startsWith('insert')) {
+        explanation += '<h4>➕ INSERT文（データの追加）</h4>';
+        explanation += '<p>このクエリはデータベースに新しいデータを<strong>追加</strong>します。</p>';
+        explanation += '<p>⚠️ 実行すると新しい行がテーブルに追加されます。</p>';
+
+    } else if (sql.startsWith('update')) {
+        explanation += '<h4>✏️ UPDATE文（データの更新）</h4>';
+        explanation += '<p>このクエリは既存のデータを<strong>変更</strong>します。</p>';
+
+        if (sql.includes('where')) {
+            explanation += '<p>✅ WHERE句で条件を指定しているので、条件に合うデータのみが更新されます。</p>';
+        } else {
+            explanation += '<p>⚠️ <strong>注意！</strong> WHERE句がないため、テーブルの<strong>全データ</strong>が更新されます！</p>';
+        }
+
+    } else if (sql.startsWith('delete')) {
+        explanation += '<h4>🗑️ DELETE文（データの削除）</h4>';
+        explanation += '<p>このクエリはデータを<strong>削除</strong>します。</p>';
+
+        if (sql.includes('where')) {
+            explanation += '<p>✅ WHERE句で条件を指定しているので、条件に合うデータのみが削除されます。</p>';
+        } else {
+            explanation += '<p>⚠️ <strong>危険！</strong> WHERE句がないため、テーブルの<strong>全データ</strong>が削除されます！</p>';
+        }
+    }
+
+    explanation += '</div>';
+
+    return explanation;
+}
+
+// ER図のテーブルハイライト（クエリ実行時）
+function highlightTablesInQuery(query) {
+    const sql = query.toLowerCase();
+
+    // 全テーブルのハイライトをリセット
+    document.querySelectorAll('.table-entity').forEach(entity => {
+        entity.classList.remove('highlighted');
+    });
+
+    // 使用されているテーブルをハイライト
+    const tables = ['users', 'orders', 'departments'];
+    tables.forEach(table => {
+        if (sql.includes(table)) {
+            const entity = document.querySelector(`[data-table="${table}"]`);
+            if (entity) {
+                entity.classList.add('highlighted');
+
+                // 2秒後にハイライトを解除
+                setTimeout(() => {
+                    entity.classList.remove('highlighted');
+                }, 2000);
+            }
+        }
+    });
+}
+
+// 親切なエラーメッセージ
+function showFriendlyError(error, query) {
+    const sql = query.toLowerCase();
+    let friendlyMessage = `エラー: ${error.message}`;
+    let hint = '';
+
+    // よくあるエラーパターンに対するヒント
+    if (error.message.includes('解析できませんでした')) {
+        hint = '<p><strong>💡 ヒント:</strong></p><ul>';
+        hint += '<li>SQLの構文が正しいか確認してください</li>';
+        hint += '<li>テーブル名やカラム名のスペルを確認してください</li>';
+        hint += '<li>クォート（\'または"）が正しく閉じられているか確認してください</li>';
+        hint += '</ul>';
+    }
+
+    if (sql.includes('update') && !sql.includes('where')) {
+        hint = '<p><strong>⚠️ 警告:</strong> UPDATE文にWHERE句がありません。全データが更新されますが、本当に実行しますか？</p>';
+    }
+
+    if (sql.includes('delete') && !sql.includes('where')) {
+        hint = '<p><strong>⚠️ 危険:</strong> DELETE文にWHERE句がありません。全データが削除されますが、本当に実行しますか？</p>';
+    }
+
+    showResult(friendlyMessage + hint, 'error');
+}
+
+// HTMLエスケープ関数
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}

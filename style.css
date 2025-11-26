@@ -1528,3 +1528,230 @@ tr:hover {
         font-size: 8px;
     }
 }
+
+/* ==================== 学習支援機能のスタイル ==================== */
+
+/* クエリ実行履歴パネル */
+.query-history-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.query-history-panel h3 {
+    color: white;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.history-list {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.history-item {
+    background: white;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.history-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: #f8f9fa;
+}
+
+.history-query {
+    font-size: 0.85rem;
+    color: #2d3748;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 5px;
+    word-break: break-all;
+}
+
+.history-time {
+    font-size: 0.7rem;
+    color: #718096;
+}
+
+.empty-history {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    padding: 20px;
+    font-size: 0.85rem;
+}
+
+/* クエリ説明エリア */
+.explanation-area {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.explanation-header {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.explanation-content {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.explanation-text h4 {
+    color: #2d3748;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.explanation-text p {
+    color: #4a5568;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.explanation-text ul {
+    margin-left: 20px;
+    color: #4a5568;
+}
+
+.explanation-text ul li {
+    margin-bottom: 5px;
+}
+
+.explanation-text strong {
+    color: #2d3748;
+    font-weight: 600;
+}
+
+/* ER図のハイライト効果 */
+.table-entity.highlighted .entity-rect {
+    fill: #fbbf24;
+    stroke: #f59e0b;
+    stroke-width: 3;
+    filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.5));
+}
+
+.table-entity.highlighted .entity-title {
+    fill: #78350f;
+    font-weight: bold;
+}
+
+/* 改善されたボタングループ */
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.button-group .btn {
+    flex: 1;
+    min-width: 100px;
+}
+
+/* エラーメッセージの改善 */
+.error {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px;
+    box-shadow: 0 4px 6px rgba(238, 90, 111, 0.3);
+}
+
+.error strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+}
+
+.error ul {
+    margin: 10px 0 0 20px;
+}
+
+.error ul li {
+    margin-bottom: 5px;
+}
+
+/* 成功メッセージの改善 */
+.success {
+    background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(55, 178, 77, 0.3);
+}
+
+/* スクロールバーのカスタマイズ */
+.history-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.history-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+    .button-group {
+        flex-direction: column;
+    }
+
+    .button-group .btn {
+        width: 100%;
+    }
+
+    .history-list {
+        max-height: 200px;
+    }
+
+    .explanation-area,
+    .query-history-panel {
+        padding: 12px;
+    }
+}

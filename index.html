@@ -88,6 +88,14 @@
                             <span>▶️</span>
                             実行
                         </button>
+                        <button class="btn btn-secondary" onclick="formatSQL()">
+                            <span>✨</span>
+                            フォーマット
+                        </button>
+                        <button class="btn btn-secondary" onclick="explainQuery()">
+                            <span>💡</span>
+                            説明
+                        </button>
                         <button class="btn btn-secondary" onclick="clearEditor()">
                             <span>🧹</span>
                             クリア
@@ -96,6 +104,15 @@
                             <span>🔄</span>
                             リセット
                         </button>
+                    </div>
+
+                    <div class="explanation-area" id="explanationArea" style="display: none;">
+                        <div class="explanation-header">
+                            <span>💡</span>
+                            クエリの説明
+                            <button class="btn btn-mini" onclick="document.getElementById('explanationArea').style.display='none'" style="float: right;">✕</button>
+                        </div>
+                        <div class="explanation-content" id="explanationContent"></div>
                     </div>
 
                     <div class="result-area" id="resultArea" style="display: none;">
@@ -254,6 +271,20 @@
                         <p><kbd>Ctrl+Enter</kbd> : クエリ実行</p>
                         <p><kbd>Ctrl+↑/↓</kbd> : 履歴ナビゲーション</p>
                         <p><kbd>Ctrl+Space</kbd> : オートコンプリート</p>
+                        <p><kbd>Ctrl+Shift+F</kbd> : フォーマット</p>
+                    </div>
+                </div>
+
+                <div class="query-history-panel">
+                    <h3>
+                        <span>📜</span>
+                        実行履歴
+                        <button class="btn btn-mini" onclick="clearHistory()" style="float: right; font-size: 0.7rem;">
+                            🗑️ クリア
+                        </button>
+                    </h3>
+                    <div class="history-list" id="historyList">
+                        <p class="empty-history">まだ履歴がありません</p>
                     </div>
                 </div>
             </div>
