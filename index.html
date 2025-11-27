@@ -171,6 +171,168 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #6b7280;
         }
+
+        /* テーブルプレビューグリッド */
+        .table-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .table-preview {
+            background: white;
+            border: 2px solid #1e90ff;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-preview h4 {
+            background: linear-gradient(to right, #1e90ff, #1873cc);
+            color: white;
+            padding: 12px 16px;
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .preview-table {
+            padding: 0;
+        }
+
+        .preview-table table {
+            margin: 0;
+            border-radius: 0;
+        }
+
+        .more-data {
+            background: #f3f4f6;
+            text-align: center;
+            font-style: italic;
+            color: #6b7280;
+        }
+
+        .table-actions-inline {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .table-actions-inline .btn {
+            flex: 1;
+        }
+
+        /* リレーション情報 */
+        .relationship-info {
+            background: #eff6ff;
+            border: 2px solid #1e90ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .relationship-info h4 {
+            color: #1e90ff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .relationship-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .relationship-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .table-name {
+            background: #1e90ff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .relation-arrow {
+            color: #1e90ff;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .relation-desc {
+            color: #6b7280;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* 練習問題 */
+        .exercise-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .exercise-card {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 2px solid #1e90ff;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .exercise-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(30, 144, 255, 0.2);
+            border-color: #1873cc;
+        }
+
+        .exercise-card h4 {
+            color: #1e90ff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin: 0 0 12px 0;
+        }
+
+        .exercise-card p {
+            color: #4b5563;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* ボタンスタイル */
+        .btn {
+            display: inline-block;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .btn-mini {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            background: #1e90ff;
+            color: white;
+        }
+
+        .btn-mini:hover {
+            background: #1873cc;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-white to-blue-50 min-h-screen">
