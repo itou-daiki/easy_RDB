@@ -655,10 +655,10 @@ function processDelete(query) {
 function displayResult(result) {
     const resultArea = document.getElementById('resultArea');
     const queryResult = document.getElementById('queryResult');
-    
+
     // Show result area
-    resultArea.style.display = 'block';
-    
+    resultArea.classList.remove('hidden');
+
     if (typeof result === 'string') {
         queryResult.innerHTML = `<div class="success">${result}</div>`;
         return;
@@ -709,9 +709,9 @@ function createTable(data) {
 function showResult(message, type) {
     const resultArea = document.getElementById('resultArea');
     const queryResult = document.getElementById('queryResult');
-    
+
     // Show result area
-    resultArea.style.display = 'block';
+    resultArea.classList.remove('hidden');
     queryResult.innerHTML = `<div class="${type}" style="margin: 15px;">${message}</div>`;
 }
 
@@ -719,7 +719,7 @@ function clearEditor() {
     if (editor) {
         editor.setValue('');
     }
-    document.getElementById('resultArea').style.display = 'none';
+    document.getElementById('resultArea').classList.add('hidden');
     document.getElementById('queryResult').innerHTML = '';
 }
 
@@ -1050,7 +1050,7 @@ function updateHistoryDisplay() {
     const historyList = document.getElementById('historyList');
 
     if (executionHistory.length === 0) {
-        historyList.innerHTML = '<p class="empty-history">まだ履歴がありません</p>';
+        historyList.innerHTML = '<p class="text-center text-white text-opacity-70 py-4 text-sm">まだ履歴がありません</p>';
         return;
     }
 
@@ -1061,9 +1061,9 @@ function updateHistoryDisplay() {
             : item.query;
 
         html += `
-            <div class="history-item" onclick="loadFromHistory(${index})">
-                <div class="history-query">${escapeHtml(shortQuery)}</div>
-                <div class="history-time">${item.timestamp}</div>
+            <div class="history-item bg-white rounded-lg p-3 mb-2 cursor-pointer transition-all hover:bg-gray-50 hover:shadow-md hover:translate-x-1" onclick="loadFromHistory(${index})">
+                <div class="text-sm text-gray-700 font-mono mb-1">${escapeHtml(shortQuery)}</div>
+                <div class="text-xs text-gray-500">${item.timestamp}</div>
             </div>
         `;
     });
@@ -1150,7 +1150,7 @@ function explainQuery() {
     const explanationContent = document.getElementById('explanationContent');
 
     explanationContent.innerHTML = explanation;
-    explanationArea.style.display = 'block';
+    explanationArea.classList.remove('hidden');
 
     // スクロールして表示
     explanationArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

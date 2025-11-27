@@ -4,134 +4,305 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>easyRDB</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e90ff',
+                        'primary-dark': '#1873cc',
+                        'primary-light': '#4da6ff',
+                    }
+                }
+            }
+        }
+    </script>
     <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/dracula.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/hint/show-hint.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
+    <style>
+        .CodeMirror { height: auto; min-height: 200px; border-radius: 8px; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-down { animation: slideDown 0.3s ease; }
+
+        /* テーブルスタイル */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        thead {
+            background: linear-gradient(to right, #1e90ff, #1873cc);
+            color: white;
+        }
+        thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s;
+        }
+        tbody tr:hover {
+            background-color: #eff6ff;
+        }
+        tbody td {
+            padding: 12px 16px;
+            color: #374151;
+        }
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        /* エラー・成功メッセージ */
+        .error {
+            background: linear-gradient(to right, #ef4444, #dc2626);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+        }
+        .success {
+            background: linear-gradient(to right, #10b981, #059669);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+        }
+
+        /* SVG ER図 */
+        .entity-rect {
+            fill: white;
+            stroke: #1e90ff;
+            stroke-width: 2;
+            rx: 5;
+        }
+        .entity-title {
+            fill: #1e90ff;
+            font-weight: bold;
+            font-size: 16px;
+            text-anchor: middle;
+        }
+        .entity-line {
+            stroke: #1e90ff;
+            stroke-width: 2;
+        }
+        .field-text {
+            fill: #4b5563;
+            font-size: 12px;
+        }
+        .field-text.pk {
+            fill: #059669;
+            font-weight: bold;
+        }
+        .field-text.fk {
+            fill: #1e90ff;
+            font-weight: bold;
+        }
+        .relation-line {
+            stroke: #6b7280;
+            stroke-width: 2;
+        }
+        .relation-dotted {
+            stroke-dasharray: 5,5;
+        }
+        .relation-endpoint {
+            fill: #6b7280;
+        }
+        .relation-text {
+            fill: #6b7280;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .legend-rect {
+            fill: #f3f4f6;
+            stroke: #d1d5db;
+            stroke-width: 2;
+            rx: 5;
+        }
+        .legend-title {
+            fill: #1f2937;
+            font-weight: bold;
+            font-size: 14px;
+            text-anchor: middle;
+        }
+        .legend-text {
+            fill: #4b5563;
+            font-size: 11px;
+        }
+
+        /* ハイライト */
+        .table-entity.highlighted .entity-rect {
+            fill: #fef3c7;
+            stroke: #f59e0b;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.5));
+        }
+        .table-entity.highlighted .entity-title {
+            fill: #78350f;
+        }
+
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>easyRDB</h1>
-            <p>ブラウザで動作するリレーショナルデータベース学習環境</p>
-            <p>Created by Dit-Lab.(Daiki ITO)</p>
-            <div class="nav-buttons">
-                <a href="tutorial.html" class="btn btn-secondary">📚 SQL解説を見る</a>
+<body class="bg-gradient-to-br from-blue-50 via-white to-blue-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="bg-gradient-to-r from-primary to-primary-dark text-white rounded-2xl shadow-2xl p-8 mb-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-3">easyRDB</h1>
+            <p class="text-lg md:text-xl mb-2 opacity-90">ブラウザで動作するリレーショナルデータベース学習環境</p>
+            <p class="text-sm opacity-75 mb-4">Created by Dit-Lab.(Daiki ITO)</p>
+            <div class="mt-6">
+                <a href="tutorial.html" class="inline-block bg-white text-primary hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg shadow-lg transition-all hover:scale-105">
+                    📚 SQL解説を見る
+                </a>
             </div>
         </div>
 
-        <div class="main-layout">
-            <div class="editor-section">
-                <div class="panel-header">
-                    <span>🚀</span>
-                    SQL Query Editor
-                </div>
-                <div class="editor-container">
-                    <textarea id="sqlEditor" style="display: none;"></textarea>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- メインエディターセクション -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-primary to-primary-dark text-white px-6 py-4">
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            <span>🚀</span>
+                            SQL Query Editor
+                        </h2>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <textarea id="sqlEditor" style="display: none;"></textarea>
 
-                    <div class="query-helpers">
-                        <div class="helper-buttons-compact">
-                            <div class="helper-category">
-                                <span class="category-label">基本クエリ</span>
-                                <button class="btn btn-helper" onclick="insertQuery('SELECT * FROM users;')">
-                                    <span>📋</span>
-                                    SELECT *
-                                </button>
-                                <button class="btn btn-helper" onclick="insertQuery('SELECT name, email FROM users;')">
-                                    <span>📝</span>
-                                    SELECT 指定列
-                                </button>
-                                <button class="btn btn-helper" onclick="insertQuery('SELECT * FROM users WHERE age > 25;')">
-                                    <span>🔍</span>
-                                    WHERE条件
-                                </button>
+                        <!-- クエリヘルパー -->
+                        <div class="bg-blue-50 rounded-lg p-4 space-y-3">
+                            <div class="space-y-2">
+                                <span class="text-sm font-semibold text-gray-700">基本クエリ</span>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="insertQuery('SELECT * FROM users;')" class="bg-white hover:bg-primary hover:text-white text-primary border border-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
+                                        📋 SELECT *
+                                    </button>
+                                    <button onclick="insertQuery('SELECT name, email FROM users;')" class="bg-white hover:bg-primary hover:text-white text-primary border border-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
+                                        📝 SELECT 指定列
+                                    </button>
+                                    <button onclick="insertQuery('SELECT * FROM users WHERE age > 25;')" class="bg-white hover:bg-primary hover:text-white text-primary border border-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
+                                        🔍 WHERE条件
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="helper-category">
-                                <span class="category-label">高度なクエリ</span>
-                                <button class="btn btn-helper" onclick="insertQuery('SELECT u.name, o.product_name, o.price\\nFROM users u\\nJOIN orders o ON u.id = o.user_id;')">
-                                    <span>🔗</span>
-                                    JOIN
-                                </button>
-                                <button class="btn btn-helper" onclick="insertQuery('SELECT department, COUNT(*) as count\\nFROM users\\nGROUP BY department;')">
-                                    <span>📊</span>
-                                    GROUP BY
-                                </button>
-                                <button class="btn btn-helper" onclick="insertQuery('SELECT * FROM users\\nORDER BY age DESC;')">
-                                    <span>⬇️</span>
-                                    ORDER BY
-                                </button>
+                            <div class="space-y-2">
+                                <span class="text-sm font-semibold text-gray-700">高度なクエリ</span>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="insertQuery('SELECT u.name, o.product_name, o.price\\nFROM users u\\nJOIN orders o ON u.id = o.user_id;')" class="bg-white hover:bg-primary hover:text-white text-primary border border-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
+                                        🔗 JOIN
+                                    </button>
+                                    <button onclick="insertQuery('SELECT department, COUNT(*) as count\\nFROM users\\nGROUP BY department;')" class="bg-white hover:bg-primary hover:text-white text-primary border border-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
+                                        📊 GROUP BY
+                                    </button>
+                                    <button onclick="insertQuery('SELECT * FROM users\\nORDER BY age DESC;')" class="bg-white hover:bg-primary hover:text-white text-primary border border-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
+                                        ⬇️ ORDER BY
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="helper-category">
-                                <span class="category-label">データ操作</span>
-                                <button class="btn btn-helper" onclick="insertQuery('INSERT INTO users (name, email, age, department)\\nVALUES (\\\'田中太郎\\\', \\\'tanaka@example.com\\\', 30, \\\'営業部\\\');')">
-                                    <span>➕</span>
-                                    INSERT
-                                </button>
-                                <button class="btn btn-helper" onclick="insertQuery('UPDATE users\\nSET email = \\\'new@example.com\\\'\\nWHERE id = 1;')">
-                                    <span>✏️</span>
-                                    UPDATE
-                                </button>
-                                <button class="btn btn-helper" onclick="insertQuery('DELETE FROM users\\nWHERE id = 1;')">
-                                    <span>🗑️</span>
-                                    DELETE
-                                </button>
+                            <div class="space-y-2">
+                                <span class="text-sm font-semibold text-gray-700">データ操作</span>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="insertQuery('INSERT INTO users (name, email, age, department)\\nVALUES (\\\'田中太郎\\\', \\\'tanaka@example.com\\\', 30, \\\'営業部\\\');')" class="bg-white hover:bg-primary hover:text-white text-primary border border-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
+                                        ➕ INSERT
+                                    </button>
+                                    <button onclick="insertQuery('UPDATE users\\nSET email = \\\'new@example.com\\\'\\nWHERE id = 1;')" class="bg-white hover:bg-primary hover:text-white text-primary border border-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
+                                        ✏️ UPDATE
+                                    </button>
+                                    <button onclick="insertQuery('DELETE FROM users\\nWHERE id = 1;')" class="bg-white hover:bg-primary hover:text-white text-primary border border-primary px-3 py-1.5 rounded-lg text-sm font-medium transition-all">
+                                        🗑️ DELETE
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="button-group">
-                        <button class="btn btn-primary" onclick="executeQuery()">
-                            <span>▶️</span>
-                            実行
-                        </button>
-                        <button class="btn btn-secondary" onclick="formatSQL()">
-                            <span>✨</span>
-                            フォーマット
-                        </button>
-                        <button class="btn btn-secondary" onclick="explainQuery()">
-                            <span>💡</span>
-                            説明
-                        </button>
-                        <button class="btn btn-secondary" onclick="clearEditor()">
-                            <span>🧹</span>
-                            クリア
-                        </button>
-                        <button class="btn btn-danger" onclick="resetDatabase()">
-                            <span>🔄</span>
-                            リセット
-                        </button>
-                    </div>
-
-                    <div class="explanation-area" id="explanationArea" style="display: none;">
-                        <div class="explanation-header">
-                            <span>💡</span>
-                            クエリの説明
-                            <button class="btn btn-mini" onclick="document.getElementById('explanationArea').style.display='none'" style="float: right;">✕</button>
-                        </div>
-                        <div class="explanation-content" id="explanationContent"></div>
-                    </div>
-
-                    <div class="result-area" id="resultArea" style="display: none;">
-                        <div class="result-header">Query Results</div>
-                        <div class="table-container">
-                            <div id="queryResult"></div>
-                        </div>
-                    </div>
-
-                    <div class="er-diagram-section">
-                        <div class="result-header">
-                            <span>🔗</span>
-                            ER図 (Entity Relationship Diagram)
-                            <button class="btn btn-mini" id="toggleERDiagram" onclick="toggleERDiagram()">
-                                <span>👁️</span>
-                                表示/非表示
+                        <!-- ボタングループ -->
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="executeQuery()" class="bg-primary hover:bg-primary-dark text-white font-semibold px-6 py-2.5 rounded-lg shadow-md transition-all hover:scale-105">
+                                ▶️ 実行
+                            </button>
+                            <button onclick="formatSQL()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2.5 rounded-lg transition-all">
+                                ✨ フォーマット
+                            </button>
+                            <button onclick="explainQuery()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2.5 rounded-lg transition-all">
+                                💡 説明
+                            </button>
+                            <button onclick="clearEditor()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2.5 rounded-lg transition-all">
+                                🧹 クリア
+                            </button>
+                            <button onclick="resetDatabase()" class="bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-2.5 rounded-lg transition-all">
+                                🔄 リセット
                             </button>
                         </div>
-                        <div class="er-diagram-container" id="erDiagramContainer">
+
+                        <!-- 説明エリア -->
+                        <div id="explanationArea" class="slide-down hidden bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl shadow-lg p-6 text-white">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold flex items-center gap-2">
+                                    <span>💡</span>
+                                    クエリの説明
+                                </h3>
+                                <button onclick="document.getElementById('explanationArea').classList.add('hidden')" class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all">
+                                    ✕
+                                </button>
+                            </div>
+                            <div id="explanationContent" class="bg-white text-gray-800 rounded-lg p-4"></div>
+                        </div>
+
+                        <!-- 結果エリア -->
+                        <div id="resultArea" class="hidden bg-gray-50 rounded-xl shadow-inner p-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <span>📊</span>
+                                Query Results
+                            </h3>
+                            <div id="queryResult" class="overflow-x-auto"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ER図セクション -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden mt-6">
+                    <div class="bg-gradient-to-r from-primary to-primary-dark text-white px-6 py-4 flex items-center justify-between">
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            <span>🔗</span>
+                            ER図 (Entity Relationship Diagram)
+                        </h2>
+                        <button id="toggleERDiagram" onclick="toggleERDiagram()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                            👁️ 表示/非表示
+                        </button>
+                    </div>
+                    <div class="p-6" id="erDiagramContainer">
                             <svg id="erDiagram" width="100%" height="400" viewBox="0 0 800 400">
                                 <!-- Users テーブル -->
                                 <g class="table-entity" data-table="users">
@@ -202,100 +373,113 @@
                 </div>
             </div>
 
-            <div class="sidebar">
-                <div class="schema-section">
-                    <h3>
-                        <span>📊</span>
-                        Database Schema
-                    </h3>
-
-                    <div class="schema-table">
-                        <h4>users</h4>
-                        <div class="schema-content">
-                            <p><strong>id:</strong> INTEGER (PRIMARY KEY)</p>
-                            <p><strong>name:</strong> TEXT</p>
-                            <p><strong>email:</strong> TEXT</p>
-                            <p><strong>age:</strong> INTEGER</p>
-                            <p><strong>department:</strong> TEXT</p>
-                            <p class="schema-note">20名のユーザー (年齢23-38歳)</p>
-                        </div>
-                        <div class="table-actions">
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'select'))">📋 SELECT</button>
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'insert'))">➕ INSERT</button>
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'update'))">✏️ UPDATE</button>
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('users', 'delete'))">🗑️ DELETE</button>
-                        </div>
+            <!-- サイドバー -->
+            <div class="space-y-6">
+                <!-- スキーマセクション -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-primary to-primary-dark text-white px-6 py-4">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <span>📊</span>
+                            Database Schema
+                        </h3>
                     </div>
+                    <div class="p-6 space-y-4">
+                        <div class="border-2 border-primary rounded-lg overflow-hidden">
+                            <div class="bg-primary text-white px-4 py-2 font-bold">users</div>
+                            <div class="p-4 bg-gray-50 space-y-1 text-sm">
+                                <p><strong class="text-green-600">id:</strong> INTEGER (PRIMARY KEY)</p>
+                                <p><strong>name:</strong> TEXT</p>
+                                <p><strong>email:</strong> TEXT</p>
+                                <p><strong>age:</strong> INTEGER</p>
+                                <p><strong>department:</strong> TEXT</p>
+                                <p class="text-xs text-gray-500 italic mt-2">20名のユーザー (年齢23-38歳)</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2 p-3 bg-white border-t">
+                                <button onclick="insertQuery(generateTableQuery('users', 'select'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">📋 SELECT</button>
+                                <button onclick="insertQuery(generateTableQuery('users', 'insert'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">➕ INSERT</button>
+                                <button onclick="insertQuery(generateTableQuery('users', 'update'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">✏️ UPDATE</button>
+                                <button onclick="insertQuery(generateTableQuery('users', 'delete'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">🗑️ DELETE</button>
+                            </div>
+                        </div>
 
-                    <div class="schema-table">
-                        <h4>orders</h4>
-                        <div class="schema-content">
-                            <p><strong>id:</strong> INTEGER (PRIMARY KEY)</p>
-                            <p><strong>user_id:</strong> INTEGER (FOREIGN KEY)</p>
-                            <p><strong>product_name:</strong> TEXT</p>
-                            <p><strong>price:</strong> INTEGER</p>
-                            <p><strong>order_date:</strong> TEXT</p>
-                            <p class="schema-note">30件の注文 (価格1,200円-120,000円)</p>
+                        <div class="border-2 border-primary rounded-lg overflow-hidden">
+                            <div class="bg-primary text-white px-4 py-2 font-bold">orders</div>
+                            <div class="p-4 bg-gray-50 space-y-1 text-sm">
+                                <p><strong class="text-green-600">id:</strong> INTEGER (PRIMARY KEY)</p>
+                                <p><strong class="text-primary">user_id:</strong> INTEGER (FOREIGN KEY)</p>
+                                <p><strong>product_name:</strong> TEXT</p>
+                                <p><strong>price:</strong> INTEGER</p>
+                                <p><strong>order_date:</strong> TEXT</p>
+                                <p class="text-xs text-gray-500 italic mt-2">30件の注文 (価格1,200円-120,000円)</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2 p-3 bg-white border-t">
+                                <button onclick="insertQuery(generateTableQuery('orders', 'select'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">📋 SELECT</button>
+                                <button onclick="insertQuery(generateTableQuery('orders', 'insert'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">➕ INSERT</button>
+                                <button onclick="insertQuery(generateTableQuery('orders', 'update'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">✏️ UPDATE</button>
+                                <button onclick="insertQuery(generateTableQuery('orders', 'delete'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">🗑️ DELETE</button>
+                            </div>
                         </div>
-                        <div class="table-actions">
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('orders', 'select'))">📋 SELECT</button>
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('orders', 'insert'))">➕ INSERT</button>
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('orders', 'update'))">✏️ UPDATE</button>
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('orders', 'delete'))">🗑️ DELETE</button>
-                        </div>
-                    </div>
 
-                    <div class="schema-table">
-                        <h4>departments</h4>
-                        <div class="schema-content">
-                            <p><strong>id:</strong> INTEGER (PRIMARY KEY)</p>
-                            <p><strong>name:</strong> TEXT</p>
-                            <p><strong>manager:</strong> TEXT</p>
-                            <p class="schema-note">5部署: 営業部、開発部、人事部、マーケティング部、経理部</p>
-                        </div>
-                        <div class="table-actions">
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('departments', 'select'))">📋 SELECT</button>
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('departments', 'insert'))">➕ INSERT</button>
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('departments', 'update'))">✏️ UPDATE</button>
-                            <button class="btn btn-mini" onclick="insertQuery(generateTableQuery('departments', 'delete'))">🗑️ DELETE</button>
+                        <div class="border-2 border-primary rounded-lg overflow-hidden">
+                            <div class="bg-primary text-white px-4 py-2 font-bold">departments</div>
+                            <div class="p-4 bg-gray-50 space-y-1 text-sm">
+                                <p><strong class="text-green-600">id:</strong> INTEGER (PRIMARY KEY)</p>
+                                <p><strong>name:</strong> TEXT</p>
+                                <p><strong>manager:</strong> TEXT</p>
+                                <p class="text-xs text-gray-500 italic mt-2">5部署: 営業部、開発部、人事部、マーケティング部、経理部</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2 p-3 bg-white border-t">
+                                <button onclick="insertQuery(generateTableQuery('departments', 'select'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">📋 SELECT</button>
+                                <button onclick="insertQuery(generateTableQuery('departments', 'insert'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">➕ INSERT</button>
+                                <button onclick="insertQuery(generateTableQuery('departments', 'update'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">✏️ UPDATE</button>
+                                <button onclick="insertQuery(generateTableQuery('departments', 'delete'))" class="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-xs transition-all">🗑️ DELETE</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="quick-tips">
-                    <h3>
+                <!-- ショートカット -->
+                <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-bold flex items-center gap-2 mb-4">
                         <span>💡</span>
                         ショートカット
                     </h3>
-                    <div class="tips-content">
-                        <p><kbd>Ctrl+Enter</kbd> : クエリ実行</p>
-                        <p><kbd>Ctrl+↑/↓</kbd> : 履歴ナビゲーション</p>
-                        <p><kbd>Ctrl+Space</kbd> : オートコンプリート</p>
-                        <p><kbd>Ctrl+Shift+F</kbd> : フォーマット</p>
+                    <div class="space-y-2 text-sm">
+                        <p class="flex items-center gap-2"><kbd class="bg-white bg-opacity-20 px-2 py-1 rounded text-xs">Ctrl+Enter</kbd> クエリ実行</p>
+                        <p class="flex items-center gap-2"><kbd class="bg-white bg-opacity-20 px-2 py-1 rounded text-xs">Ctrl+↑/↓</kbd> 履歴ナビゲーション</p>
+                        <p class="flex items-center gap-2"><kbd class="bg-white bg-opacity-20 px-2 py-1 rounded text-xs">Ctrl+Space</kbd> オートコンプリート</p>
+                        <p class="flex items-center gap-2"><kbd class="bg-white bg-opacity-20 px-2 py-1 rounded text-xs">Ctrl+Shift+F</kbd> フォーマット</p>
                     </div>
                 </div>
 
-                <div class="query-history-panel">
-                    <h3>
-                        <span>📜</span>
-                        実行履歴
-                        <button class="btn btn-mini" onclick="clearHistory()" style="float: right; font-size: 0.7rem;">
+                <!-- 実行履歴 -->
+                <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <span>📜</span>
+                            実行履歴
+                        </h3>
+                        <button onclick="clearHistory()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-xs font-medium transition-all">
                             🗑️ クリア
                         </button>
-                    </h3>
-                    <div class="history-list" id="historyList">
-                        <p class="empty-history">まだ履歴がありません</p>
+                    </div>
+                    <div class="px-4 pb-4">
+                        <div id="historyList" class="bg-white bg-opacity-10 rounded-lg p-3 max-h-80 overflow-y-auto">
+                            <p class="text-center text-white text-opacity-70 py-4 text-sm">まだ履歴がありません</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="tables-overview">
-            <div class="panel-header">
-                <span>📋</span>
-                テーブル一覧とサンプルデータ
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden my-8">
+            <div class="bg-gradient-to-r from-primary to-primary-dark text-white px-6 py-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <span>📋</span>
+                    テーブル一覧とサンプルデータ
+                </h2>
             </div>
-            <div class="tables-content">
+            <div class="p-6">
                 <div class="table-preview-grid">
                     <div class="table-preview">
                         <h4>users テーブル</h4>
@@ -486,12 +670,14 @@
             </div>
         </div>
 
-        <div class="exercise-panel">
-            <div class="panel-header">
-                <span>🎯</span>
-                練習問題
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden my-8">
+            <div class="bg-gradient-to-r from-primary to-primary-dark text-white px-6 py-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <span>🎯</span>
+                    練習問題
+                </h2>
             </div>
-            <div class="exercise-content">
+            <div class="p-6">
                 <div class="exercise-list">
                     <div class="exercise-card">
                         <h4>基本のSELECT</h4>
